@@ -1,26 +1,93 @@
 @import "tailwindcss";
 
+/* ── Design tokeny — bread & wheat palette, scatter bg ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #080806;           /* skoro černá, podkres scatter bg */
+  --surface: #12100a;      /* tmavší plocha pro sekce */
+  --surface-2: #1c1810;    /* karty */
+  --primary: #c8924a;      /* barva chleba — teplá, hospodská */
+  --primary-soft: #dba96a; /* světlejší chlebová zlatá */
+  --cream: #e8c99a;        /* pšeničná / chlebová bílá = hlavní text */
+  --white: #f5f0e8;        /* čistší bílá pro kontrastní akcenty */
+  --muted: #a08c6e;        /* tlumený sekundární text */
+  --line: rgba(200, 146, 74, 0.15); /* jemné linky v tónu chleba */
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-cream: var(--cream);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+
+  --font-display: var(--font-cormorant);
+  --font-body: var(--font-dm-sans);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* kotvy se nezasunou pod fixní navigaci */
+  section[id],
+  [id="rezervace"] {
+    scroll-margin-top: 5.5rem;
+  }
+
+  body {
+    background-color: var(--bg);
+    background-image: url('/images/scatter-bg.png');
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center center;
+    color: var(--cream);
+    overflow-x: hidden;
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "kern" 1, "liga" 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--primary);
+    color: var(--bg);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Display font – Cormorant Display, elegantní serif pro nadpisy ── */
+.font-display {
+  font-family: var(--font-display), 'Georgia', serif;
+  font-feature-settings: "kern" 1, "liga" 1, "dlig" 1;
+}
+
+/* ── Vstupní animace (page load) — stagger přes inline animation-delay ── */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.reveal {
+  opacity: 0;
+  animation: rise 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }

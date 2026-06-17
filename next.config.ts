@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    // povolené hodnoty `quality` pro <Image quality={...}>
+    qualities: [75, 90, 92],
+  },
 };
 
 export default nextConfig;
