@@ -1,16 +1,10 @@
 import Image, { type StaticImageData } from "next/image";
-import piva from "../../public/images/detail-piva.jpg";
-import polevka from "../../public/images/detail-polevka.jpg";
-import pecene from "../../public/images/detail-pecene.jpg";
 import svickova from "../../public/images/zvule/zvule-jidlo.jpg";
 import chatky from "../../public/images/zvule/zvule-chatky.jpg";
 import landstejn from "../../public/images/zvule/zvule-landstejn.jpg";
 import { Reveal } from "./reveal";
 
 const photos: { src: StaticImageData; alt: string }[] = [
-  { src: piva, alt: "Dvě vychlazená točená piva s pěnou" },
-  { src: polevka, alt: "Sváteční polévka s plátky houskového knedlíku" },
-  { src: pecene, alt: "Pečené vepřové maso na prkénku s křenem" },
   { src: svickova, alt: "Svíčková na smetaně s knedlíkem a brusinkami" },
   { src: chatky, alt: "Areál autokempu Zvůle s chatkami u lesa" },
   { src: landstejn, alt: "Hrad Landštejn nad lesy České Kanady" },

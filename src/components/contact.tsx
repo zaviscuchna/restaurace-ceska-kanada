@@ -69,12 +69,18 @@ export function Contact() {
           </Reveal>
         </div>
 
-        {/* Mapa — TODO: vložit reálný Google Maps embed (iframe) */}
         <Reveal delay={100} className="mt-12">
-          <div className="flex h-72 items-center justify-center overflow-hidden rounded-2xl border border-line bg-surface md:h-96">
-            <span className="text-xs uppercase tracking-[0.22em] text-muted">
-              Mapa: zde přijde Google Maps embed (Autokemp Zvůle)
-            </span>
+          <div className="overflow-hidden rounded-2xl border border-line" style={{ height: "420px" }}>
+            <iframe
+              src="https://www.google.com/maps?q=Autokemp+Zvůle,+Sportovní+197,+37862+Kunžak&output=embed&hl=cs&z=14"
+              width="100%"
+              height="100%"
+              style={{ border: 0, display: "block" }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Mapa — Restaurace Česká Kanada, Autokemp Zvůle"
+            />
           </div>
         </Reveal>
       </div>
