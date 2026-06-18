@@ -1,8 +1,17 @@
 import { site } from "@/lib/site";
+import { getMenuGroups, getTodayDailyMenu } from "@/lib/menu-data";
 import { Reveal } from "./reveal";
 import { MenuTabs } from "./menu-tabs";
 
-export function Menu() {
+export async function Menu() {
+  const [menuGroups, dailyMenu] = await Promise.all([
+    getMenuGroups(),
+    getTodayDailyMenu(),
+  ]);
+
+  const dailyDishes = dailyMenu?.expand?.dishes ?? [];
+  const dailyNote = dailyMenu?.note ?? "";
+
   return (
     <section id="jidelnicek" className="relative bg-surface/30 py-[clamp(5rem,12vw,9rem)]">
       <div className="mx-auto max-w-6xl px-6 md:px-12">
@@ -22,7 +31,7 @@ export function Menu() {
           </p>
         </Reveal>
 
-        <MenuTabs />
+        <MenuTabs menuGroups={menuGroups} dailyDishes={dailyDishes} dailyNote={dailyNote} />
 
         <Reveal className="mt-16 text-center">
           <a
