@@ -49,7 +49,7 @@ export function Hero() {
             className="reveal block text-[clamp(3rem,8vw,7rem)] font-light leading-[0.92] tracking-[-0.02em] text-white"
             style={{ animationDelay: "0.22s" }}
           >
-            Tady chutná
+            Takhle chutná
           </span>
           <span
             className="reveal block text-[clamp(3rem,8vw,7rem)] font-light italic leading-[0.92] tracking-[-0.02em] text-primary"
@@ -63,8 +63,7 @@ export function Hero() {
           className="reveal mt-8 max-w-[44ch] text-[1rem] leading-relaxed text-cream/80 md:text-[1.08rem]"
           style={{ animationDelay: "0.52s" }}
         >
-          Poctivá česká kuchyně v klidu borových lesů. Svíčková, rožněné sele,
-          vychlazený ležák — u rybníka Zvůle v srdci České Kanady.
+          Poctivá česká kuchyně v klidu borových lesů — u rybníka Zvůle v srdci České Kanady.
         </p>
 
         <div
