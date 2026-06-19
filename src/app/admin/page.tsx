@@ -274,14 +274,13 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
                 color: #000; font-size: 11pt; box-sizing: border-box;
               }
             }
-            /* ── Print: @page margins, papír bez vlastního paddingu ── */
+            /* ── Print ── */
             @media print {
               @page { size: A4 portrait; margin: 22mm 28mm 18mm 28mm; }
-              body > * { display: none !important; }
-              #po-root { display: block !important; position: static !important;
-                         background: none !important; padding: 0 !important; overflow: visible !important; }
+              body * { visibility: hidden; }
+              #po-paper, #po-paper * { visibility: visible; }
+              #po-paper { position: fixed; top: 0; left: 0; width: 100%; padding: 0 !important; box-shadow: none !important; }
               #po-toolbar { display: none !important; }
-              #po-paper { box-shadow: none !important; width: auto !important; padding: 0 !important; }
             }
             /* ── Obsah (stejný screen i print) ── */
             #po-paper .po-header { text-align: center; margin-bottom: 22pt; }
