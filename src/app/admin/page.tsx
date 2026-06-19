@@ -190,20 +190,24 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
     setAdditions(a => a.map(x => x.id === iid ? { ...x, ...patch } : x));
 
   // Sekce pro tisk — permanent rozdělené podle kategorie + přídavky
+  const isSoup = (dish: Dish | null, price: string) => {
+    if (!dish && !price) return false;
+    const name = dish?.name ?? "";
+    if (name.toLowerCase().includes("polévk") || name.toLowerCase().includes("vývar")) return true;
+    const num = parseInt((dish?.price ?? price).replace(/[^0-9]/g, ""));
+    return !isNaN(num) && num < 100;
+  };
+
   const getSectionsForPrint = () => {
-    const soups = permanentDishes.filter(d => {
-      const catName = allDishes.find(x => x.id === d.id);
-      return d.name.toLowerCase().includes("polévk") || d.name.toLowerCase().includes("vývar") || d.price === "65 Kč";
-    });
-    const mains = permanentDishes.filter(d => !soups.includes(d));
-    const additionItems = additions.filter(i => i.customName.trim());
+    const allItems: SectionItem[] = [
+      ...permanentDishes.map(d => ({ id: d.id, dish: d, customName: d.name, price: d.price })),
+      ...additions.filter(i => i.customName.trim()),
+    ];
+    const soupItems = allItems.filter(i => isSoup(i.dish, i.price));
+    const mainItems = allItems.filter(i => !isSoup(i.dish, i.price));
 
     const sections: Section[] = [];
-    if (soups.length) sections.push({ id: "soups", title: "Polévky", items: soups.map(d => ({ id: d.id, dish: d, customName: d.name, price: d.price })) });
-    const mainItems = [
-      ...mains.map(d => ({ id: d.id, dish: d, customName: d.name, price: d.price })),
-      ...additionItems,
-    ];
+    if (soupItems.length) sections.push({ id: "soups", title: "Polévky", items: soupItems });
     if (mainItems.length) sections.push({ id: "mains", title: "Hlavní chod", items: mainItems });
     return sections;
   };
@@ -213,72 +217,26 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
     ...additions.map(i => i.dish?.id).filter(Boolean) as string[],
   ];
 
+  type PrintSection = { title: string; items: { fullName: string; allergens: string; price: string }[] };
+  type PrintData = { dateStr: string; sections: PrintSection[] };
+  const [printData, setPrintData] = useState<PrintData | null>(null);
+
   const printMenu = () => {
     const d = new Date();
     const dateStr = `${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()}`;
-    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
-    const rows = getSectionsForPrint().map(sec => {
-      const items = sec.items.filter(i => i.customName.trim());
-      if (!items.length) return "";
-      const rowsHtml = items.map(item => {
+    const sections: PrintSection[] = getSectionsForPrint().map(sec => ({
+      title: sec.title.toUpperCase(),
+      items: sec.items.filter(i => i.customName.trim()).map(item => {
         const num = item.price.replace(/[^0-9]/g, "");
-        const priceStr = num ? `${num},- Kč` : esc(item.price);
-        const allergens = item.dish?.allergens?.length ? ` (${item.dish.allergens.join(",")})` : "";
         const desc = item.dish?.description?.trim();
-        const fullName = desc ? `${esc(desc)} ${esc(item.customName)}` : esc(item.customName);
-        return `<div class="row"><span class="name">${fullName}${esc(allergens)}</span><span class="price">${priceStr}</span></div>`;
-      }).join("");
-      return `<div class="section"><div class="section-title">${esc(sec.title.toUpperCase())}</div>${rowsHtml}</div>`;
-    }).join("");
-
-    const html = `<!DOCTYPE html>
-<html lang="cs">
-<head>
-<meta charset="UTF-8">
-<title>Jídelní lístek ${esc(dateStr)}</title>
-<style>
-  @page { size: A4; margin: 25mm 30mm 20mm 30mm; }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: "Times New Roman", Times, serif; font-size: 11pt; color: #000; }
-  .header { text-align: center; margin-bottom: 18pt; }
-  h1 { font-size: 28pt; font-weight: bold; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.1; }
-  .date { font-size: 11pt; margin-top: 4pt; }
-  .section { margin-bottom: 2pt; }
-  .section-title { font-size: 11pt; font-weight: bold; text-decoration: underline; margin-top: 12pt; margin-bottom: 3pt; }
-  .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3.5pt; }
-  .name { flex: 1; font-size: 11pt; padding-right: 8pt; }
-  .price { font-weight: bold; font-size: 11pt; white-space: nowrap; min-width: 60pt; text-align: right; }
-  .footer { margin-top: 22pt; text-align: center; }
-  .footer p { margin-bottom: 3pt; font-size: 10.5pt; }
-  .footer .f-italic { font-style: italic; font-weight: bold; }
-  .footer .f-caps { font-weight: bold; text-transform: uppercase; letter-spacing: 0.03em; }
-  .footer .f-sig { font-style: italic; }
-  .footer .gap { margin-top: 10pt; }
-</style>
-</head>
-<body>
-<div class="header">
-  <h1>Jídelní lístek</h1>
-  <div class="date">${esc(dateStr)}</div>
-</div>
-${rows}
-<div class="footer">
-  <p class="f-italic">Poloviční porce = 70&nbsp;% z ceny</p>
-  <p class="f-caps">Váha masa je uvedena v syrovém stavu</p>
-  <p class="f-caps">Přejeme dobrou chuť</p>
-  <p class="gap f-sig">Jídlo pro vás s láskou připravuje David &quot;Večerníček Jr.&quot; Račák</p>
-  <p class="f-sig">Odpovědná osoba Smejkal Rostislav</p>
-</div>
-<script>window.onload = function() { window.print(); }<\/script>
-</body>
-</html>`;
-
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const w = window.open(url, "_blank", "width=800,height=1000");
-    if (w) w.addEventListener("load", () => URL.revokeObjectURL(url));
-    else URL.revokeObjectURL(url);
+        return {
+          fullName: desc ? `${desc} ${item.customName}` : item.customName,
+          allergens: item.dish?.allergens?.length ? `(${item.dish.allergens.join(",")})` : "",
+          price: num ? `${num},- Kč` : item.price,
+        };
+      }),
+    }));
+    setPrintData({ dateStr, sections });
   };
 
   const publish = async () => {
@@ -303,6 +261,88 @@ ${rows}
 
   return (
     <div>
+      {/* Print CSS + overlay */}
+      <style>{`
+        @media print {
+          body > * { display: none !important; }
+          #print-overlay { display: block !important; position: static !important; background: none !important; padding: 0 !important; }
+          #print-overlay .print-toolbar { display: none !important; }
+          #print-overlay .paper { box-shadow: none !important; width: auto !important; padding: 0 !important; }
+          @page { size: A4 portrait; margin: 22mm 28mm 18mm 28mm; }
+        }
+      `}</style>
+
+      {printData && (
+        <div id="print-overlay" style={{ position: "fixed", inset: 0, background: "#555", zIndex: 9999, overflowY: "auto", padding: "20px 0 40px" }}>
+          <style>{`
+            @media print {
+              body > * { display: none !important; }
+              #print-overlay { display: block !important; position: static !important; background: none !important; padding: 0 !important; overflow: visible !important; }
+              #print-overlay .print-toolbar { display: none !important; }
+              #print-overlay .paper { box-shadow: none !important; width: auto !important; padding: 0 !important; min-height: auto !important; }
+              @page { size: A4 portrait; margin: 22mm 28mm 18mm 28mm; }
+            }
+          `}</style>
+
+          {/* Toolbar — skryje se při tisku */}
+          <div className="print-toolbar" style={{ width: "210mm", margin: "0 auto 14px", display: "flex", gap: 10 }}>
+            <button onClick={() => window.print()}
+              style={{ flex: 1, padding: "11px 0", background: "#1C1510", color: "#fff", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+              🖨 Tisknout / Uložit jako PDF
+            </button>
+            <button onClick={() => setPrintData(null)}
+              style={{ padding: "11px 18px", background: "rgba(255,255,255,.15)", color: "#fff", border: "1px solid rgba(255,255,255,.3)", borderRadius: 8, fontSize: 14, cursor: "pointer" }}>
+              Zavřít
+            </button>
+          </div>
+
+          {/* A4 papír */}
+          <div className="paper" style={{ width: "210mm", minHeight: "297mm", background: "#fff", margin: "0 auto", padding: "22mm 28mm 18mm 28mm", boxShadow: "0 6px 40px rgba(0,0,0,.5)", fontFamily: '"Times New Roman", Times, serif', color: "#000", fontSize: "11pt", boxSizing: "border-box" }}>
+
+            {/* Nadpis */}
+            <div style={{ textAlign: "center", marginBottom: "16pt" }}>
+              <div style={{ fontSize: "27pt", fontWeight: "bold", letterSpacing: "0.1em", lineHeight: 1.1 }}>JÍDELNÍ LÍSTEK</div>
+              <div style={{ fontSize: "11pt", marginTop: "4pt" }}>{printData.dateStr}</div>
+            </div>
+
+            {/* Sekce a jídla */}
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <tbody>
+                {printData.sections.map(sec => (
+                  <>
+                    <tr key={`h-${sec.title}`}>
+                      <td colSpan={2} style={{ fontSize: "11pt", fontWeight: "bold", textDecoration: "underline", paddingTop: "12pt", paddingBottom: "3pt" }}>
+                        {sec.title}
+                      </td>
+                    </tr>
+                    {sec.items.map((item, i) => (
+                      <tr key={i}>
+                        <td style={{ fontSize: "11pt", padding: "1.5pt 8pt 1.5pt 0", verticalAlign: "baseline" }}>
+                          {item.fullName}{item.allergens ? ` ${item.allergens}` : ""}
+                        </td>
+                        <td style={{ fontSize: "11pt", fontWeight: "bold", whiteSpace: "nowrap", textAlign: "right", verticalAlign: "baseline", padding: "1.5pt 0" }}>
+                          {item.price}
+                        </td>
+                      </tr>
+                    ))}
+                  </>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Footer */}
+            <div style={{ marginTop: "22pt", textAlign: "center" }}>
+              <p style={{ fontStyle: "italic", fontWeight: "bold", fontSize: "10.5pt", marginBottom: "3pt" }}>Poloviční porce = 70 % z ceny</p>
+              <p style={{ fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.03em", fontSize: "10.5pt", marginBottom: "3pt" }}>Váha masa je uvedena v syrovém stavu</p>
+              <p style={{ fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.03em", fontSize: "10.5pt", marginBottom: "3pt" }}>Přejeme dobrou chuť</p>
+              <p style={{ fontStyle: "italic", fontSize: "10.5pt", marginTop: "10pt", marginBottom: "2pt" }}>Jídlo pro vás s láskou připravuje David &quot;Večerníček Jr.&quot; Račák</p>
+              <p style={{ fontStyle: "italic", fontSize: "10.5pt" }}>Odpovědná osoba Smejkal Rostislav</p>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* Hlavička */}
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
         <div>
