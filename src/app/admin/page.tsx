@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 import * as XLSX from "xlsx";
 import { getClientPb } from "@/lib/pb";
 import type { Dish, MenuGroup, Category, DailyMenu } from "@/lib/types";
@@ -261,31 +261,47 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
 
   return (
     <div>
-      {/* Print CSS + overlay */}
-      <style>{`
-        @media print {
-          body > * { display: none !important; }
-          #print-overlay { display: block !important; position: static !important; background: none !important; padding: 0 !important; }
-          #print-overlay .print-toolbar { display: none !important; }
-          #print-overlay .paper { box-shadow: none !important; width: auto !important; padding: 0 !important; }
-          @page { size: A4 portrait; margin: 22mm 28mm 18mm 28mm; }
-        }
-      `}</style>
-
-      {printData && (
-        <div id="print-overlay" style={{ position: "fixed", inset: 0, background: "#555", zIndex: 9999, overflowY: "auto", padding: "20px 0 40px" }}>
+{printData && (
+        <div id="po-root" style={{ position: "fixed", inset: 0, background: "#555", zIndex: 9999, overflowY: "auto", padding: "20px 0 40px" }}>
           <style>{`
-            @media print {
-              body > * { display: none !important; }
-              #print-overlay { display: block !important; position: static !important; background: none !important; padding: 0 !important; overflow: visible !important; }
-              #print-overlay .print-toolbar { display: none !important; }
-              #print-overlay .paper { box-shadow: none !important; width: auto !important; padding: 0 !important; min-height: auto !important; }
-              @page { size: A4 portrait; margin: 22mm 28mm 18mm 28mm; }
+            /* ── Screen: papír jako vizuální náhled ── */
+            @media screen {
+              #po-paper {
+                width: 210mm; background: #fff; margin: 0 auto;
+                padding: 28mm 28mm 24mm 28mm;
+                box-shadow: 0 6px 40px rgba(0,0,0,.5);
+                font-family: "Times New Roman", Times, serif;
+                color: #000; font-size: 11pt; box-sizing: border-box;
+              }
             }
+            /* ── Print: @page margins, papír bez vlastního paddingu ── */
+            @media print {
+              @page { size: A4 portrait; margin: 22mm 28mm 18mm 28mm; }
+              body > * { display: none !important; }
+              #po-root { display: block !important; position: static !important;
+                         background: none !important; padding: 0 !important; overflow: visible !important; }
+              #po-toolbar { display: none !important; }
+              #po-paper { box-shadow: none !important; width: auto !important; padding: 0 !important; }
+            }
+            /* ── Obsah (stejný screen i print) ── */
+            #po-paper .po-header { text-align: center; margin-bottom: 22pt; }
+            #po-paper .po-title  { font-size: 27pt; font-weight: bold; letter-spacing: 0.1em; line-height: 1.15; }
+            #po-paper .po-date   { font-size: 11pt; margin-top: 5pt; }
+            #po-paper table      { width: 100%; border-collapse: collapse; }
+            #po-paper .po-sh td  { font-size: 11pt; font-weight: bold; text-decoration: underline;
+                                   padding-top: 14pt; padding-bottom: 4pt; }
+            #po-paper .po-row td { font-size: 11pt; padding: 3pt 0; vertical-align: baseline; }
+            #po-paper .po-name   { padding-right: 8pt; }
+            #po-paper .po-price  { font-weight: bold; white-space: nowrap; text-align: right; min-width: 58pt; }
+            #po-paper .po-footer { margin-top: 28pt; text-align: center; }
+            #po-paper .po-footer p { font-size: 10.5pt; margin-bottom: 3.5pt; }
+            #po-paper .po-fi    { font-style: italic; font-weight: bold; }
+            #po-paper .po-fc    { font-weight: bold; text-transform: uppercase; letter-spacing: 0.04em; }
+            #po-paper .po-fs    { font-style: italic; }
+            #po-paper .po-gap   { margin-top: 13pt !important; }
           `}</style>
 
-          {/* Toolbar — skryje se při tisku */}
-          <div className="print-toolbar" style={{ width: "210mm", margin: "0 auto 14px", display: "flex", gap: 10 }}>
+          <div id="po-toolbar" style={{ width: "210mm", margin: "0 auto 14px", display: "flex", gap: 10 }}>
             <button onClick={() => window.print()}
               style={{ flex: 1, padding: "11px 0", background: "#1C1510", color: "#fff", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
               🖨 Tisknout / Uložit jako PDF
@@ -296,49 +312,37 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
             </button>
           </div>
 
-          {/* A4 papír */}
-          <div className="paper" style={{ width: "210mm", minHeight: "297mm", background: "#fff", margin: "0 auto", padding: "22mm 28mm 18mm 28mm", boxShadow: "0 6px 40px rgba(0,0,0,.5)", fontFamily: '"Times New Roman", Times, serif', color: "#000", fontSize: "11pt", boxSizing: "border-box" }}>
-
-            {/* Nadpis */}
-            <div style={{ textAlign: "center", marginBottom: "16pt" }}>
-              <div style={{ fontSize: "27pt", fontWeight: "bold", letterSpacing: "0.1em", lineHeight: 1.1 }}>JÍDELNÍ LÍSTEK</div>
-              <div style={{ fontSize: "11pt", marginTop: "4pt" }}>{printData.dateStr}</div>
+          <div id="po-paper">
+            <div className="po-header">
+              <div className="po-title">JÍDELNÍ LÍSTEK</div>
+              <div className="po-date">{printData.dateStr}</div>
             </div>
 
-            {/* Sekce a jídla */}
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <table>
               <tbody>
                 {printData.sections.map(sec => (
-                  <>
-                    <tr key={`h-${sec.title}`}>
-                      <td colSpan={2} style={{ fontSize: "11pt", fontWeight: "bold", textDecoration: "underline", paddingTop: "12pt", paddingBottom: "3pt" }}>
-                        {sec.title}
-                      </td>
+                  <Fragment key={sec.title}>
+                    <tr className="po-sh">
+                      <td colSpan={2}>{sec.title}</td>
                     </tr>
                     {sec.items.map((item, i) => (
-                      <tr key={i}>
-                        <td style={{ fontSize: "11pt", padding: "1.5pt 8pt 1.5pt 0", verticalAlign: "baseline" }}>
-                          {item.fullName}{item.allergens ? ` ${item.allergens}` : ""}
-                        </td>
-                        <td style={{ fontSize: "11pt", fontWeight: "bold", whiteSpace: "nowrap", textAlign: "right", verticalAlign: "baseline", padding: "1.5pt 0" }}>
-                          {item.price}
-                        </td>
+                      <tr key={i} className="po-row">
+                        <td className="po-name">{item.fullName}{item.allergens ? ` ${item.allergens}` : ""}</td>
+                        <td className="po-price">{item.price}</td>
                       </tr>
                     ))}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
 
-            {/* Footer */}
-            <div style={{ marginTop: "22pt", textAlign: "center" }}>
-              <p style={{ fontStyle: "italic", fontWeight: "bold", fontSize: "10.5pt", marginBottom: "3pt" }}>Poloviční porce = 70 % z ceny</p>
-              <p style={{ fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.03em", fontSize: "10.5pt", marginBottom: "3pt" }}>Váha masa je uvedena v syrovém stavu</p>
-              <p style={{ fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.03em", fontSize: "10.5pt", marginBottom: "3pt" }}>Přejeme dobrou chuť</p>
-              <p style={{ fontStyle: "italic", fontSize: "10.5pt", marginTop: "10pt", marginBottom: "2pt" }}>Jídlo pro vás s láskou připravuje David &quot;Večerníček Jr.&quot; Račák</p>
-              <p style={{ fontStyle: "italic", fontSize: "10.5pt" }}>Odpovědná osoba Smejkal Rostislav</p>
+            <div className="po-footer">
+              <p className="po-fi">Poloviční porce = 70 % z ceny</p>
+              <p className="po-fc">Váha masa je uvedena v syrovém stavu</p>
+              <p className="po-fc">Přejeme dobrou chuť</p>
+              <p className="po-fs po-gap">Jídlo pro vás s láskou připravuje David &quot;Večerníček Jr.&quot; Račák</p>
+              <p className="po-fs">Odpovědná osoba Smejkal Rostislav</p>
             </div>
-
           </div>
         </div>
       )}
