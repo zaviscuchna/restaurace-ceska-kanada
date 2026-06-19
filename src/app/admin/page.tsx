@@ -204,6 +204,69 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
 
   const allDishIds = sections.flatMap(s => s.items.map(i => i.dish?.id).filter(Boolean)) as string[];
 
+  const printMenu = () => {
+    const d = new Date();
+    const dateStr = `${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()}`;
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+    const rows = sections.map(sec => {
+      const items = sec.items.filter(i => i.customName.trim());
+      if (!items.length) return "";
+      const rowsHtml = items.map(item => {
+        const num = item.price.replace(/[^0-9]/g, "");
+        const priceStr = num ? `${num},- Kč` : esc(item.price);
+        const allergens = item.dish?.allergens?.length ? ` (${item.dish.allergens.join(",")})` : "";
+        return `<div class="row"><span class="name">${esc(item.customName)}${esc(allergens)}</span><span class="price">${priceStr}</span></div>`;
+      }).join("");
+      return `<div class="section"><div class="section-title">${esc(sec.title)}</div>${rowsHtml}</div>`;
+    }).join("");
+
+    const html = `<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Jídelní lístek ${esc(dateStr)}</title>
+<style>
+  @page { size: A4; margin: 22mm 28mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Times New Roman", Times, serif; font-size: 11.5pt; color: #000; }
+  h1 { text-align: center; font-size: 26pt; font-weight: bold; letter-spacing: 0.08em; margin-bottom: 5pt; }
+  .date { text-align: center; font-size: 11.5pt; margin-bottom: 20pt; }
+  .section { margin-bottom: 6pt; }
+  .section-title { font-size: 12pt; font-weight: bold; text-decoration: underline; margin-top: 14pt; margin-bottom: 5pt; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4pt; gap: 12pt; }
+  .name { flex: 1; font-size: 11pt; }
+  .price { font-weight: bold; font-size: 11pt; white-space: nowrap; min-width: 72pt; text-align: right; }
+  .footer { margin-top: 28pt; text-align: center; }
+  .footer p { margin-bottom: 4pt; font-size: 10pt; }
+  .footer .italic { font-style: italic; font-weight: bold; }
+  .footer .caps { font-weight: bold; text-transform: uppercase; }
+  .footer .sig { font-style: italic; }
+</style>
+</head>
+<body>
+<h1>Jídelní lístek</h1>
+<div class="date">${esc(dateStr)}</div>
+${rows}
+<div class="footer">
+  <p class="italic">Poloviční porce = 70&nbsp;% z ceny</p>
+  <p class="caps">Váha masa je uvedena v syrovém stavu</p>
+  <p class="caps">Přejeme dobrou chuť</p>
+  <br>
+  <p class="sig">Jídlo pro vás s láskou připravuje David &quot;Večerníček Jr.&quot; Račák</p>
+  <p class="sig">Odpovědná osoba Smejkal Rostislav</p>
+</div>
+<script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, "_blank", "width=800,height=1000");
+    if (w) w.addEventListener("load", () => URL.revokeObjectURL(url));
+    else URL.revokeObjectURL(url);
+  };
+
   const publish = async () => {
     const pb = getClientPb();
     setSaving(true);
@@ -233,6 +296,10 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
           <a href="/" target="_blank" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", fontSize: 13.5, fontWeight: 600, border: "1px solid #EDE6D8", borderRadius: 9, color: "#4A3828", textDecoration: "none" }}>
             Otevřít web →
           </a>
+          <button onClick={printMenu}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", fontSize: 13.5, fontWeight: 600, border: "1px solid #EDE6D8", borderRadius: 9, color: "#4A3828", background: "#fff", cursor: "pointer" }}>
+            🖨 Tisknout lístek
+          </button>
           <button onClick={publish} disabled={saving}
             style={{ padding: "10px 22px", fontSize: 14, fontWeight: 600, background: saved ? "#2D7E7D" : "#4CAAA8", color: "#fff", border: "none", borderRadius: 9, cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, transition: "background .2s" }}>
             {saving ? "Ukládám…" : saved ? "✓ Publikováno" : "Publikovat na web"}
