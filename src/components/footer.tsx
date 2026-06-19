@@ -52,10 +52,17 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col gap-2 border-t border-line pt-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 {site.name}</p>
-          <p>
-            Web: <span className="text-cream/70">KSH</span>
+        <div className="mt-14 border-t border-line pt-6 text-xs text-muted">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+            <p>© 2026 {site.name}</p>
+            <p>
+              Web: <span className="text-cream/70">KSH</span>
+            </p>
+          </div>
+          <p className="mt-3 leading-relaxed">
+            Provozovatel: <span className="text-cream/50">ZEREST s.r.o.</span>
+            {" · "}IČO: <span className="text-cream/50">08074381</span>
+            {" · "}Sídlo: <span className="text-cream/50">Hornoměcholupská 663/141, 109&nbsp;00 Praha 15</span>
           </p>
         </div>
       </div>
