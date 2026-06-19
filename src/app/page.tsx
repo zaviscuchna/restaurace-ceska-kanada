@@ -4,6 +4,7 @@ import { SiteNav } from "@/components/site-nav";
 import { Hero } from "@/components/hero";
 import { About } from "@/components/about";
 import { Menu } from "@/components/menu";
+import { Prase } from "@/components/prase";
 import { Reviews } from "@/components/reviews";
 import { Camp } from "@/components/camp";
 import { Gallery } from "@/components/gallery";
@@ -16,6 +17,7 @@ export default function Home() {
       <SiteNav />
       <Hero />
       <Menu />
+      <Prase />
       <About />
       <Reviews />
       <Camp />
