@@ -161,13 +161,14 @@ function AutocompleteInput({ dishes, value, onChange, onSelect, placeholder }: {
 //  DENNÍ MENU TAB
 // ════════════════════════════════════════════════════════════════════════════
 function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
-  const [sections, setSections] = useState<Section[]>([newSection("Polévka"), newSection("Hlavní jídla")]);
+  const permanentDishes = allDishes.filter(d => d.is_permanent);
+  const [additions, setAdditions] = useState<SectionItem[]>([]);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Načti dnešní denní menu z PB
+  // Načti dnešní přídavky z PB (permanent jsou vždy automaticky)
   useEffect(() => {
     const pb = getClientPb();
     pb.collection("daily_menu").getFirstListItem<DailyMenu & { expand: { dishes: Dish[] } }>(
@@ -175,41 +176,49 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
       { expand: "dishes" }
     ).then(dm => {
       setNote(dm.note ?? "");
-      // Rekonstruuj sekce — jednu sekci pro polévky, jednu pro hlavní
       const dishes = dm.expand?.dishes ?? [];
-      const soups = dishes.filter(d => allDishes.find(a => a.id === d.id && (allDishes.find(x => x.id === d.id))));
-      // Jednoduchá rekonstrukce: vše do jedné sekce
-      if (dishes.length > 0) {
-        setSections([{
-          id: mkId(), title: "Dnešní nabídka",
-          items: dishes.map(d => ({ id: mkId(), dish: d, customName: d.name, price: d.price }))
-        }]);
-      }
+      // Do additions dej jen ty, co nejsou permanent
+      const permIds = new Set(allDishes.filter(d => d.is_permanent).map(d => d.id));
+      const additionDishes = dishes.filter(d => !permIds.has(d.id));
+      setAdditions(additionDishes.map(d => ({ id: mkId(), dish: d, customName: d.name, price: d.price })));
     }).catch(() => {}).finally(() => setLoading(false));
   }, [allDishes]);
 
-  const addSection = () => setSections(s => [...s, newSection()]);
-  const removeSection = (sid: string) => setSections(s => s.filter(x => x.id !== sid));
-  const updateSection = (sid: string, patch: Partial<Section>) =>
-    setSections(s => s.map(x => x.id === sid ? { ...x, ...patch } : x));
+  const addAddition = () => setAdditions(a => [...a, newItem()]);
+  const removeAddition = (iid: string) => setAdditions(a => a.filter(x => x.id !== iid));
+  const updateAddition = (iid: string, patch: Partial<SectionItem>) =>
+    setAdditions(a => a.map(x => x.id === iid ? { ...x, ...patch } : x));
 
-  const addItem = (sid: string) =>
-    updateSection(sid, { items: [...sections.find(s => s.id === sid)!.items, newItem()] });
-  const removeItem = (sid: string, iid: string) =>
-    updateSection(sid, { items: sections.find(s => s.id === sid)!.items.filter(x => x.id !== iid) });
-  const updateItem = (sid: string, iid: string, patch: Partial<SectionItem>) =>
-    updateSection(sid, {
-      items: sections.find(s => s.id === sid)!.items.map(x => x.id === iid ? { ...x, ...patch } : x)
+  // Sekce pro tisk — permanent rozdělené podle kategorie + přídavky
+  const getSectionsForPrint = () => {
+    const soups = permanentDishes.filter(d => {
+      const catName = allDishes.find(x => x.id === d.id);
+      return d.name.toLowerCase().includes("polévk") || d.name.toLowerCase().includes("vývar") || d.price === "65 Kč";
     });
+    const mains = permanentDishes.filter(d => !soups.includes(d));
+    const additionItems = additions.filter(i => i.customName.trim());
 
-  const allDishIds = sections.flatMap(s => s.items.map(i => i.dish?.id).filter(Boolean)) as string[];
+    const sections: Section[] = [];
+    if (soups.length) sections.push({ id: "soups", title: "Polévky", items: soups.map(d => ({ id: d.id, dish: d, customName: d.name, price: d.price })) });
+    const mainItems = [
+      ...mains.map(d => ({ id: d.id, dish: d, customName: d.name, price: d.price })),
+      ...additionItems,
+    ];
+    if (mainItems.length) sections.push({ id: "mains", title: "Hlavní chod", items: mainItems });
+    return sections;
+  };
+
+  const allDishIds = [
+    ...permanentDishes.map(d => d.id),
+    ...additions.map(i => i.dish?.id).filter(Boolean) as string[],
+  ];
 
   const printMenu = () => {
     const d = new Date();
     const dateStr = `${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()}`;
     const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-    const rows = sections.map(sec => {
+    const rows = getSectionsForPrint().map(sec => {
       const items = sec.items.filter(i => i.customName.trim());
       if (!items.length) return "";
       const rowsHtml = items.map(item => {
@@ -285,8 +294,11 @@ ${rows}
 
   if (loading) return <p style={{ color: "#7A6858", padding: 20 }}>Načítám…</p>;
 
+  const nonPermanentDishes = allDishes.filter(d => !d.is_permanent);
+
   return (
     <div>
+      {/* Hlavička */}
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
         <div>
           <h1 style={{ fontFamily: "Georgia,serif", fontSize: 28, fontWeight: 500, letterSpacing: "-0.01em" }}>Dnešní menu</h1>
@@ -297,7 +309,7 @@ ${rows}
             Otevřít web →
           </a>
           <button onClick={printMenu}
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", fontSize: 13.5, fontWeight: 600, border: "1px solid #EDE6D8", borderRadius: 9, color: "#4A3828", background: "#fff", cursor: "pointer" }}>
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px", fontSize: 14, fontWeight: 700, border: "2px solid #1C1510", borderRadius: 9, color: "#1C1510", background: "#fff", cursor: "pointer" }}>
             🖨 Tisknout lístek
           </button>
           <button onClick={publish} disabled={saving}
@@ -307,72 +319,80 @@ ${rows}
         </div>
       </div>
 
-      {/* Sekce menu */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 16 }}>
-        {sections.map(sec => (
-          <div key={sec.id} style={{ background: "#F6F2EB", borderRadius: 12, border: "1px solid #EDE6D8" }}>
-            {/* Section header */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", borderBottom: "1px solid #EDE6D8" }}>
-              <input
-                type="text"
-                value={sec.title}
-                onChange={e => updateSection(sec.id, { title: e.target.value })}
-                placeholder="Název sekce (Polévka, Hlavní jídla…)"
-                style={{ flex: 1, fontFamily: "Georgia,serif", fontSize: 17, fontWeight: 500, background: "transparent", border: 0, outline: "none", borderBottom: "1px dashed transparent", padding: "4px 0" }}
-                onFocus={e => (e.target.style.borderBottomColor = "#b8e8e7")}
-                onBlur={e => (e.target.style.borderBottomColor = "transparent")}
-              />
-              <button onClick={() => removeSection(sec.id)}
-                style={{ padding: "6px 10px", fontSize: 14, color: "#7A6858", borderRadius: 6, border: "none", background: "none", cursor: "pointer" }}>✕</button>
-            </div>
-
-            {/* Položky */}
-            <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-              {sec.items.map(item => (
-                <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 100px auto", gap: 8, alignItems: "center" }}>
-                  <AutocompleteInput
-                    dishes={allDishes}
-                    value={item.customName}
-                    onChange={v => updateItem(sec.id, item.id, { customName: v, dish: null })}
-                    onSelect={d => updateItem(sec.id, item.id, { dish: d, customName: d.name, price: d.price })}
-                  />
-                  <input
-                    type="text"
-                    value={item.price}
-                    onChange={e => updateItem(sec.id, item.id, { price: e.target.value })}
-                    placeholder="cena"
-                    style={{ padding: "9px 10px", fontSize: 13, border: "1px solid #EDE6D8", borderRadius: 8, outline: "none", textAlign: "right", fontWeight: 600, color: "#2D7E7D", background: "#fff" }}
-                  />
-                  <button onClick={() => removeItem(sec.id, item.id)}
-                    style={{ padding: "7px 10px", fontSize: 14, color: "#7A6858", border: "none", background: "none", borderRadius: 6, cursor: "pointer" }}>✕</button>
-                </div>
-              ))}
-              {/* Alergeny pod vybraným jídlem */}
-              {sec.items.filter(i => i.dish?.allergens?.length).map(item => (
-                <div key={`al-${item.id}`} style={{ fontSize: 11, color: "#7A6858", paddingLeft: 4 }}>
-                  {item.dish?.name}: alergeny {item.dish?.allergens?.map(a => `${a} ${ALLERGEN_NAMES[a as keyof typeof ALLERGEN_NAMES]}`).join(", ")}
-                </div>
-              ))}
-              <button onClick={() => addItem(sec.id)}
-                style={{ alignSelf: "flex-start", marginTop: 4, fontSize: 13, color: "#2D7E7D", fontWeight: 600, padding: "6px 12px", borderRadius: 6, border: "none", background: "none", cursor: "pointer" }}>
-                + Přidat položku
-              </button>
-            </div>
+      {/* Stálá nabídka — auto, jen pro přehled */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+          <span style={{ fontFamily: "Georgia,serif", fontSize: 17, fontWeight: 500 }}>Stálá nabídka</span>
+          <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 10px", borderRadius: 999, background: "#EAF6F5", color: "#2D7E7D", border: "1px solid #b8e8e7" }}>AUTO · {permanentDishes.length} jídel</span>
+        </div>
+        {permanentDishes.length === 0 ? (
+          <div style={{ padding: "20px 22px", background: "#F6F2EB", borderRadius: 12, border: "1.5px dashed #EDE6D8", color: "#7A6858", fontSize: 13 }}>
+            Žádná stálá jídla — nastav je v <strong>Databázi jídel</strong> přepnutím &quot;Stálé menu&quot;.
           </div>
-        ))}
+        ) : (
+          <div style={{ background: "#F6F2EB", borderRadius: 12, border: "1px solid #EDE6D8", overflow: "hidden" }}>
+            {permanentDishes.map((d, i) => (
+              <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderBottom: i < permanentDishes.length - 1 ? "1px solid #EDE6D8" : "none", opacity: 0.75 }}>
+                <span style={{ flex: 1, fontSize: 13.5, color: "#1C1510" }}>{d.name}{d.description ? ` — ${d.description}` : ""}</span>
+                {d.allergens?.length > 0 && <span style={{ fontSize: 11, color: "#7A6858" }}>({d.allergens.join(",")})</span>}
+                <span style={{ fontWeight: 700, color: "#2D7E7D", fontSize: 13, minWidth: 60, textAlign: "right" }}>{d.price}</span>
+                <span style={{ fontSize: 11, color: "#b8e8e7", fontWeight: 600 }}>🔒</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <button onClick={addSection}
-        style={{ width: "100%", padding: 16, border: "2px dashed #b8e8e7", background: "transparent", borderRadius: 12, color: "#2D7E7D", fontWeight: 600, fontSize: 13.5, cursor: "pointer", marginBottom: 24 }}>
-        + Přidat sekci (Polévka, Specialita…)
-      </button>
+      {/* Dnešní přídavky — brigádník edituje jen toto */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+          <span style={{ fontFamily: "Georgia,serif", fontSize: 17, fontWeight: 500 }}>Dnešní přídavky</span>
+          <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 10px", borderRadius: 999, background: "#FFF8EE", color: "#B8722A", border: "1px solid #F0D4A0" }}>MĚNÍ SE DENNĚ</span>
+        </div>
+        <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #EDE6D8", overflow: "hidden" }}>
+          <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+            {additions.length === 0 && (
+              <p style={{ fontSize: 13, color: "#7A6858", padding: "8px 0" }}>Dnes žádné přídavky — stálá nabídka bude na lístku bez přídavků.</p>
+            )}
+            {additions.map(item => (
+              <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 100px auto", gap: 8, alignItems: "center" }}>
+                <AutocompleteInput
+                  dishes={nonPermanentDishes}
+                  value={item.customName}
+                  onChange={v => updateAddition(item.id, { customName: v, dish: null })}
+                  onSelect={d => updateAddition(item.id, { dish: d, customName: d.name, price: d.price })}
+                  placeholder="Název jídla z databáze…"
+                />
+                <input
+                  type="text"
+                  value={item.price}
+                  onChange={e => updateAddition(item.id, { price: e.target.value })}
+                  placeholder="cena"
+                  style={{ padding: "9px 10px", fontSize: 13, border: "1px solid #EDE6D8", borderRadius: 8, outline: "none", textAlign: "right", fontWeight: 600, color: "#2D7E7D", background: "#fff" }}
+                />
+                <button onClick={() => removeAddition(item.id)}
+                  style={{ padding: "7px 10px", fontSize: 14, color: "#7A6858", border: "none", background: "none", borderRadius: 6, cursor: "pointer" }}>✕</button>
+              </div>
+            ))}
+            {additions.filter(i => i.dish?.allergens?.length).map(item => (
+              <div key={`al-${item.id}`} style={{ fontSize: 11, color: "#7A6858", paddingLeft: 4 }}>
+                {item.dish?.name}: {item.dish?.allergens?.map(a => `${a} ${ALLERGEN_NAMES[a as keyof typeof ALLERGEN_NAMES]}`).join(", ")}
+              </div>
+            ))}
+            <button onClick={addAddition}
+              style={{ alignSelf: "flex-start", marginTop: 4, fontSize: 13.5, color: "#2D7E7D", fontWeight: 700, padding: "8px 14px", borderRadius: 8, border: "1.5px dashed #b8e8e7", background: "#EAF6F5", cursor: "pointer" }}>
+              + Přidat dnešní jídlo
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Poznámka */}
       <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #EDE6D8", overflow: "hidden" }}>
         <div style={{ padding: "16px 22px", borderBottom: "1px solid #EDE6D8", fontFamily: "Georgia,serif", fontSize: 16, fontWeight: 500 }}>Poznámka pod menu</div>
         <div style={{ padding: 22 }}>
           <input type="text" value={note} onChange={e => setNote(e.target.value)} maxLength={200}
-            placeholder="např. Menu se podává do 14:00 · Polévka ke každému jídlu zdarma"
+            placeholder="např. Menu se podává do 14:00"
             style={{ width: "100%", padding: "12px 14px", border: "1.5px solid #EDE6D8", borderRadius: 10, outline: "none", fontSize: 14, color: "#1C1510" }} />
         </div>
       </div>
@@ -401,7 +421,7 @@ function DishesDbTab({ dishes, onRefresh }: { dishes: Dish[]; onRefresh: () => v
 
   const openEdit = (d: Dish) => { setEditDish({ ...d }); setShowModal(true); };
   const openNew = () => {
-    setEditDish({ id: "", collectionId: "", name: "", description: "", price: "", photo: "", allergens: [], category: categories[0]?.id ?? "", is_active: true });
+    setEditDish({ id: "", collectionId: "", name: "", description: "", price: "", photo: "", allergens: [], category: categories[0]?.id ?? "", is_active: true, is_permanent: false });
     setShowModal(true);
   };
 
@@ -414,6 +434,7 @@ function DishesDbTab({ dishes, onRefresh }: { dishes: Dish[]; onRefresh: () => v
         name: editDish.name, description: editDish.description,
         price: editDish.price, allergens: JSON.stringify(editDish.allergens),
         category: editDish.category, is_active: editDish.is_active,
+        is_permanent: editDish.is_permanent,
       };
       editDish.id
         ? await pb.collection("dishes").update(editDish.id, data)
@@ -564,6 +585,13 @@ function DishesDbTab({ dishes, onRefresh }: { dishes: Dish[]; onRefresh: () => v
                 <div>
                   <div style={{ fontSize: 13.5, fontWeight: 600, color: editDish.is_active ? "#2D7E7D" : "#4A3828" }}>Zobrazit na webu</div>
                   <div style={{ fontSize: 11, color: "#7A6858", marginTop: 2 }}>Aktivní jídla se zobrazují ve stálém jídelníčku</div>
+                </div>
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderRadius: 10, border: `1.5px solid ${editDish.is_permanent ? "#B8722A" : "#EDE6D8"}`, background: editDish.is_permanent ? "#FFF8EE" : "#F6F2EB", cursor: "pointer", transition: "all .15s" }}>
+                <input type="checkbox" checked={!!editDish.is_permanent} onChange={e => setEditDish({ ...editDish, is_permanent: e.target.checked })} style={{ width: 18, height: 18, accentColor: "#B8722A", cursor: "pointer" }} />
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: editDish.is_permanent ? "#B8722A" : "#4A3828" }}>Stálé menu 🔒</div>
+                  <div style={{ fontSize: 11, color: "#7A6858", marginTop: 2 }}>Automaticky se zobrazí v každém denním menu bez přidávání</div>
                 </div>
               </label>
             </div>

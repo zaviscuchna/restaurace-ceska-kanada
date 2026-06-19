@@ -22,6 +22,7 @@ export type Dish = {
   allergens: Allergen[];
   category: string;
   is_active: boolean;
+  is_permanent?: boolean;
 };
 
 export type MenuGroup = {
