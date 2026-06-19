@@ -225,9 +225,11 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
         const num = item.price.replace(/[^0-9]/g, "");
         const priceStr = num ? `${num},- Kč` : esc(item.price);
         const allergens = item.dish?.allergens?.length ? ` (${item.dish.allergens.join(",")})` : "";
-        return `<div class="row"><span class="name">${esc(item.customName)}${esc(allergens)}</span><span class="price">${priceStr}</span></div>`;
+        const desc = item.dish?.description?.trim();
+        const fullName = desc ? `${esc(desc)} ${esc(item.customName)}` : esc(item.customName);
+        return `<div class="row"><span class="name">${fullName}${esc(allergens)}</span><span class="price">${priceStr}</span></div>`;
       }).join("");
-      return `<div class="section"><div class="section-title">${esc(sec.title)}</div>${rowsHtml}</div>`;
+      return `<div class="section"><div class="section-title">${esc(sec.title.toUpperCase())}</div>${rowsHtml}</div>`;
     }).join("");
 
     const html = `<!DOCTYPE html>
@@ -236,34 +238,37 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
 <meta charset="UTF-8">
 <title>Jídelní lístek ${esc(dateStr)}</title>
 <style>
-  @page { size: A4; margin: 22mm 28mm; }
+  @page { size: A4; margin: 25mm 30mm 20mm 30mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: "Times New Roman", Times, serif; font-size: 11.5pt; color: #000; }
-  h1 { text-align: center; font-size: 26pt; font-weight: bold; letter-spacing: 0.08em; margin-bottom: 5pt; }
-  .date { text-align: center; font-size: 11.5pt; margin-bottom: 20pt; }
-  .section { margin-bottom: 6pt; }
-  .section-title { font-size: 12pt; font-weight: bold; text-decoration: underline; margin-top: 14pt; margin-bottom: 5pt; }
-  .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4pt; gap: 12pt; }
-  .name { flex: 1; font-size: 11pt; }
-  .price { font-weight: bold; font-size: 11pt; white-space: nowrap; min-width: 72pt; text-align: right; }
-  .footer { margin-top: 28pt; text-align: center; }
-  .footer p { margin-bottom: 4pt; font-size: 10pt; }
-  .footer .italic { font-style: italic; font-weight: bold; }
-  .footer .caps { font-weight: bold; text-transform: uppercase; }
-  .footer .sig { font-style: italic; }
+  body { font-family: "Times New Roman", Times, serif; font-size: 11pt; color: #000; }
+  .header { text-align: center; margin-bottom: 18pt; }
+  h1 { font-size: 28pt; font-weight: bold; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.1; }
+  .date { font-size: 11pt; margin-top: 4pt; }
+  .section { margin-bottom: 2pt; }
+  .section-title { font-size: 11pt; font-weight: bold; text-decoration: underline; margin-top: 12pt; margin-bottom: 3pt; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3.5pt; }
+  .name { flex: 1; font-size: 11pt; padding-right: 8pt; }
+  .price { font-weight: bold; font-size: 11pt; white-space: nowrap; min-width: 60pt; text-align: right; }
+  .footer { margin-top: 22pt; text-align: center; }
+  .footer p { margin-bottom: 3pt; font-size: 10.5pt; }
+  .footer .f-italic { font-style: italic; font-weight: bold; }
+  .footer .f-caps { font-weight: bold; text-transform: uppercase; letter-spacing: 0.03em; }
+  .footer .f-sig { font-style: italic; }
+  .footer .gap { margin-top: 10pt; }
 </style>
 </head>
 <body>
-<h1>Jídelní lístek</h1>
-<div class="date">${esc(dateStr)}</div>
+<div class="header">
+  <h1>Jídelní lístek</h1>
+  <div class="date">${esc(dateStr)}</div>
+</div>
 ${rows}
 <div class="footer">
-  <p class="italic">Poloviční porce = 70&nbsp;% z ceny</p>
-  <p class="caps">Váha masa je uvedena v syrovém stavu</p>
-  <p class="caps">Přejeme dobrou chuť</p>
-  <br>
-  <p class="sig">Jídlo pro vás s láskou připravuje David &quot;Večerníček Jr.&quot; Račák</p>
-  <p class="sig">Odpovědná osoba Smejkal Rostislav</p>
+  <p class="f-italic">Poloviční porce = 70&nbsp;% z ceny</p>
+  <p class="f-caps">Váha masa je uvedena v syrovém stavu</p>
+  <p class="f-caps">Přejeme dobrou chuť</p>
+  <p class="gap f-sig">Jídlo pro vás s láskou připravuje David &quot;Večerníček Jr.&quot; Račák</p>
+  <p class="f-sig">Odpovědná osoba Smejkal Rostislav</p>
 </div>
 <script>window.onload = function() { window.print(); }<\/script>
 </body>
