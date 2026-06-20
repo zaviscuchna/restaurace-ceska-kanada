@@ -240,15 +240,15 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
   };
 
   const publish = async () => {
-    const pb = getClientPb();
     setSaving(true);
     try {
-      const data = { date: today, note, dishes: allDishIds };
-      const existing = await pb.collection("daily_menu")
-        .getFirstListItem<DailyMenu>(`date = "${today}"`).catch(() => null);
-      existing
-        ? await pb.collection("daily_menu").update(existing.id, data)
-        : await pb.collection("daily_menu").create(data);
+      const res = await fetch("/api/admin/daily-menu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: today, note, dishes: allDishIds }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? "Chyba");
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (e) { console.error(e); alert("Chyba při ukládání!"); }
@@ -475,33 +475,48 @@ function DishesDbTab({ dishes, onRefresh }: { dishes: Dish[]; onRefresh: () => v
 
   const save = async () => {
     if (!editDish) return;
-    const pb = getClientPb();
     setSaving(true);
     try {
-      const data = {
+      const body = {
+        id: editDish.id || undefined,
         name: editDish.name, description: editDish.description,
-        price: editDish.price, allergens: JSON.stringify(editDish.allergens),
+        price: editDish.price, allergens: editDish.allergens,
         category: editDish.category, is_active: editDish.is_active,
         is_permanent: editDish.is_permanent,
       };
-      editDish.id
-        ? await pb.collection("dishes").update(editDish.id, data)
-        : await pb.collection("dishes").create(data);
+      const res = await fetch("/api/admin/dish", {
+        method: editDish.id ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? "Chyba");
       setShowModal(false);
       onRefresh();
-    } catch (e) { console.error(e); alert("Chyba!"); }
+    } catch (e) { console.error(e); alert("Chyba při ukládání: " + (e instanceof Error ? e.message : e)); }
     finally { setSaving(false); }
   };
 
   const deleteDish = async () => {
     if (!editDish?.id || !confirm("Smazat jídlo?")) return;
-    await getClientPb().collection("dishes").delete(editDish.id);
+    const res = await fetch("/api/admin/dish", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: editDish.id }),
+      credentials: "include",
+    });
+    if (!res.ok) { alert("Smazání selhalo"); return; }
     setShowModal(false);
     onRefresh();
   };
 
   const quickToggle = async (d: Dish) => {
-    await getClientPb().collection("dishes").update(d.id, { is_active: !d.is_active });
+    await fetch("/api/admin/dish", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: d.id, is_active: !d.is_active }),
+      credentials: "include",
+    });
     onRefresh();
   };
 
