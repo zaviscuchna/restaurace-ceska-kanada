@@ -160,15 +160,18 @@ function AutocompleteInput({ dishes, value, onChange, onSelect, placeholder }: {
 // ════════════════════════════════════════════════════════════════════════════
 //  DENNÍ MENU TAB
 // ════════════════════════════════════════════════════════════════════════════
+const SOUP_CATEGORY_ID = "8mbaj7liym9le4i";
+
 function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
   const permanentDishes = allDishes.filter(d => d.is_permanent);
+  const [soups, setSoups] = useState<SectionItem[]>([]);
   const [additions, setAdditions] = useState<SectionItem[]>([]);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Načti dnešní přídavky z PB (permanent jsou vždy automaticky)
+  // Načti dnešní polévky + přídavky z PB
   useEffect(() => {
     const pb = getClientPb();
     pb.collection("daily_menu").getFirstListItem<DailyMenu & { expand: { dishes: Dish[] } }>(
@@ -177,35 +180,31 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
     ).then(dm => {
       setNote(dm.note ?? "");
       const dishes = dm.expand?.dishes ?? [];
-      // Do additions dej jen ty, co nejsou permanent
       const permIds = new Set(allDishes.filter(d => d.is_permanent).map(d => d.id));
-      const additionDishes = dishes.filter(d => !permIds.has(d.id));
-      setAdditions(additionDishes.map(d => ({ id: mkId(), dish: d, customName: d.name, price: d.price })));
+      const nonPermDishes = dishes.filter(d => !permIds.has(d.id));
+      const soupDishes = nonPermDishes.filter(d => d.category === SOUP_CATEGORY_ID);
+      const mainDishes = nonPermDishes.filter(d => d.category !== SOUP_CATEGORY_ID);
+      setSoups(soupDishes.map(d => ({ id: mkId(), dish: d, customName: d.name, price: d.price })));
+      setAdditions(mainDishes.map(d => ({ id: mkId(), dish: d, customName: d.name, price: d.price })));
     }).catch(() => {}).finally(() => setLoading(false));
   }, [allDishes]);
+
+  const addSoup = () => setSoups(s => [...s, newItem()]);
+  const removeSoup = (iid: string) => setSoups(s => s.filter(x => x.id !== iid));
+  const updateSoup = (iid: string, patch: Partial<SectionItem>) =>
+    setSoups(s => s.map(x => x.id === iid ? { ...x, ...patch } : x));
 
   const addAddition = () => setAdditions(a => [...a, newItem()]);
   const removeAddition = (iid: string) => setAdditions(a => a.filter(x => x.id !== iid));
   const updateAddition = (iid: string, patch: Partial<SectionItem>) =>
     setAdditions(a => a.map(x => x.id === iid ? { ...x, ...patch } : x));
 
-  // Sekce pro tisk — permanent rozdělené podle kategorie + přídavky
-  const isSoup = (dish: Dish | null, price: string) => {
-    if (!dish && !price) return false;
-    const name = dish?.name ?? "";
-    if (name.toLowerCase().includes("polévk") || name.toLowerCase().includes("vývar")) return true;
-    const num = parseInt((dish?.price ?? price).replace(/[^0-9]/g, ""));
-    return !isNaN(num) && num < 100;
-  };
-
   const getSectionsForPrint = () => {
-    const allItems: SectionItem[] = [
+    const soupItems = soups.filter(i => i.customName.trim());
+    const mainItems = [
       ...permanentDishes.map(d => ({ id: d.id, dish: d, customName: d.name, price: d.price })),
       ...additions.filter(i => i.customName.trim()),
     ];
-    const soupItems = allItems.filter(i => isSoup(i.dish, i.price));
-    const mainItems = allItems.filter(i => !isSoup(i.dish, i.price));
-
     const sections: Section[] = [];
     if (soupItems.length) sections.push({ id: "soups", title: "Polévky", items: soupItems });
     if (mainItems.length) sections.push({ id: "mains", title: "Hlavní chod", items: mainItems });
@@ -214,6 +213,7 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
 
   const allDishIds = [
     ...permanentDishes.map(d => d.id),
+    ...soups.map(i => i.dish?.id).filter(Boolean) as string[],
     ...additions.map(i => i.dish?.id).filter(Boolean) as string[],
   ];
 
@@ -257,7 +257,8 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
 
   if (loading) return <p style={{ color: "#7A6858", padding: 20 }}>Načítám…</p>;
 
-  const nonPermanentDishes = allDishes.filter(d => !d.is_permanent);
+  const soupDishesForAutocomplete = allDishes.filter(d => !d.is_permanent && d.category === SOUP_CATEGORY_ID);
+  const mainDishesForAutocomplete = allDishes.filter(d => !d.is_permanent && d.category !== SOUP_CATEGORY_ID);
 
   return (
     <div>
@@ -367,6 +368,50 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
         </div>
       </div>
 
+      {/* Dnešní polévky */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+          <span style={{ fontFamily: "Georgia,serif", fontSize: 17, fontWeight: 500 }}>Dnešní polévky</span>
+          <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 10px", borderRadius: 999, background: "#FFF8EE", color: "#B8722A", border: "1px solid #F0D4A0" }}>MĚNÍ SE DENNĚ</span>
+        </div>
+        <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #EDE6D8", overflow: "hidden" }}>
+          <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+            {soups.length === 0 && (
+              <p style={{ fontSize: 13, color: "#7A6858", padding: "8px 0" }}>Dnes žádná polévka.</p>
+            )}
+            {soups.map(item => (
+              <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 100px auto", gap: 8, alignItems: "center" }}>
+                <AutocompleteInput
+                  dishes={soupDishesForAutocomplete}
+                  value={item.customName}
+                  onChange={v => updateSoup(item.id, { customName: v, dish: null })}
+                  onSelect={d => updateSoup(item.id, { dish: d, customName: d.name, price: d.price })}
+                  placeholder="Název polévky z databáze…"
+                />
+                <input
+                  type="text"
+                  value={item.price}
+                  onChange={e => updateSoup(item.id, { price: e.target.value })}
+                  placeholder="cena"
+                  style={{ padding: "9px 10px", fontSize: 13, border: "1px solid #EDE6D8", borderRadius: 8, outline: "none", textAlign: "right", fontWeight: 600, color: "#B8722A", background: "#fff" }}
+                />
+                <button onClick={() => removeSoup(item.id)}
+                  style={{ padding: "7px 10px", fontSize: 14, color: "#7A6858", border: "none", background: "none", borderRadius: 6, cursor: "pointer" }}>✕</button>
+              </div>
+            ))}
+            {soups.filter(i => i.dish?.allergens?.length).map(item => (
+              <div key={`al-soup-${item.id}`} style={{ fontSize: 11, color: "#7A6858", paddingLeft: 4 }}>
+                {item.dish?.name}: {item.dish?.allergens?.map(a => `${a} ${ALLERGEN_NAMES[a as keyof typeof ALLERGEN_NAMES]}`).join(", ")}
+              </div>
+            ))}
+            <button onClick={addSoup}
+              style={{ alignSelf: "flex-start", marginTop: 4, fontSize: 13.5, color: "#B8722A", fontWeight: 700, padding: "8px 14px", borderRadius: 8, border: "1.5px dashed #F0D4A0", background: "#FFF8EE", cursor: "pointer" }}>
+              + Přidat polévku
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Stálá nabídka — auto, jen pro přehled */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
@@ -405,7 +450,7 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
             {additions.map(item => (
               <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 100px auto", gap: 8, alignItems: "center" }}>
                 <AutocompleteInput
-                  dishes={nonPermanentDishes}
+                  dishes={mainDishesForAutocomplete}
                   value={item.customName}
                   onChange={v => updateAddition(item.id, { customName: v, dish: null })}
                   onSelect={d => updateAddition(item.id, { dish: d, customName: d.name, price: d.price })}
