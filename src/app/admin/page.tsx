@@ -163,7 +163,7 @@ function AutocompleteInput({ dishes, value, onChange, onSelect, placeholder }: {
 const SOUP_CATEGORY_ID = "8mbaj7liym9le4i";
 
 function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
-  const permanentDishes = allDishes.filter(d => d.is_permanent);
+  const permanentDishes = allDishes.filter(d => d.is_permanent && d.is_active !== false);
   const [soups, setSoups] = useState<SectionItem[]>([]);
   const [additions, setAdditions] = useState<SectionItem[]>([]);
   const [note, setNote] = useState("");
@@ -180,7 +180,7 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
     ).then(dm => {
       setNote(dm.note ?? "");
       const dishes = dm.expand?.dishes ?? [];
-      const permIds = new Set(allDishes.filter(d => d.is_permanent).map(d => d.id));
+      const permIds = new Set(allDishes.filter(d => d.is_permanent && d.is_active !== false).map(d => d.id));
       const nonPermDishes = dishes.filter(d => !permIds.has(d.id));
       const soupDishes = nonPermDishes.filter(d => d.category === SOUP_CATEGORY_ID);
       const mainDishes = nonPermDishes.filter(d => d.category !== SOUP_CATEGORY_ID);
@@ -257,8 +257,8 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
 
   if (loading) return <p style={{ color: "#7A6858", padding: 20 }}>Načítám…</p>;
 
-  const soupDishesForAutocomplete = allDishes.filter(d => !d.is_permanent && d.category === SOUP_CATEGORY_ID);
-  const mainDishesForAutocomplete = allDishes.filter(d => !d.is_permanent && d.category !== SOUP_CATEGORY_ID);
+  const soupDishesForAutocomplete = allDishes.filter(d => d.category === SOUP_CATEGORY_ID);
+  const mainDishesForAutocomplete = allDishes.filter(d => d.category !== SOUP_CATEGORY_ID);
 
   return (
     <div>
@@ -1051,7 +1051,7 @@ export default function AdminPage() {
         </div>
 
         <main style={{ padding: "36px 44px", maxWidth: 1080 }}>
-          {tab === "today" && <DailyMenuTab allDishes={allDishes.filter(d => d.is_active !== false)} />}
+          {tab === "today" && <DailyMenuTab allDishes={allDishes} />}
           {tab === "dishes" && <DishesDbTab dishes={allDishes} onRefresh={loadDishes} />}
           {tab === "import" && <ImportTab onImportDone={loadDishes} />}
         </main>
