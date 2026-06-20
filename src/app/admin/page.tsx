@@ -265,7 +265,7 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
 {printData && (
         <div id="po-root" style={{ position: "fixed", inset: 0, background: "#555", zIndex: 9999, overflowY: "auto", padding: "20px 0 40px" }}>
           <style>{`
-            /* ── Screen: plný A4 náhled ── */
+            /* ── Screen: A4 náhled ── */
             @media screen {
               #po-paper {
                 width: 210mm; height: 297mm; background: #fff; margin: 0 auto;
@@ -276,30 +276,30 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
                 display: flex; flex-direction: column;
               }
             }
-            /* ── Print ── */
+            /* ── Print: přirozený tok, bez flex — jinak 3 stránky ── */
             @media print {
               @page { size: A4 portrait; margin: 22mm 28mm 18mm 28mm; }
               body * { visibility: hidden; }
               #po-paper, #po-paper * { visibility: visible; }
-              #po-paper { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; padding: 0 !important; box-shadow: none !important; display: flex; flex-direction: column; }
+              #po-paper { position: fixed; top: 0; left: 0; width: 100%; padding: 0 !important; box-shadow: none !important; }
               #po-toolbar { display: none !important; }
             }
-            /* ── Obsah (stejný screen i print) ── */
-            #po-paper .po-header { text-align: center; margin-bottom: 28pt; flex-shrink: 0; }
-            #po-paper .po-title  { font-size: 36pt; font-weight: bold; letter-spacing: 0.1em; line-height: 1.15; }
-            #po-paper .po-date   { font-size: 14pt; margin-top: 6pt; }
+            /* ── Obsah (screen i print) ── */
+            #po-paper .po-header { text-align: center; margin-bottom: 22pt; flex-shrink: 0; }
+            #po-paper .po-title  { font-size: 30pt; font-weight: bold; letter-spacing: 0.1em; line-height: 1.15; }
+            #po-paper .po-date   { font-size: 12pt; margin-top: 5pt; }
             #po-paper table      { width: 100%; border-collapse: collapse; flex: 1; }
-            #po-paper .po-sh td  { font-size: 13pt; font-weight: bold; text-decoration: underline;
-                                   padding-top: 22pt; padding-bottom: 7pt; }
-            #po-paper .po-row td { font-size: 13pt; padding: 9pt 0; vertical-align: baseline; }
+            #po-paper .po-sh td  { font-size: 12pt; font-weight: bold; text-decoration: underline;
+                                   padding-top: 18pt; padding-bottom: 5pt; }
+            #po-paper .po-row td { font-size: 12pt; padding: 7pt 0; vertical-align: baseline; }
             #po-paper .po-name   { padding-right: 8pt; }
-            #po-paper .po-price  { font-weight: bold; white-space: nowrap; text-align: right; min-width: 62pt; }
-            #po-paper .po-footer { margin-top: 32pt; text-align: center; flex-shrink: 0; }
-            #po-paper .po-footer p { font-size: 12pt; margin-bottom: 5pt; }
+            #po-paper .po-price  { font-weight: bold; white-space: nowrap; text-align: right; min-width: 60pt; }
+            #po-paper .po-footer { margin-top: 28pt; text-align: center; flex-shrink: 0; }
+            #po-paper .po-footer p { font-size: 11pt; margin-bottom: 4pt; }
             #po-paper .po-fi    { font-style: italic; font-weight: bold; }
             #po-paper .po-fc    { font-weight: bold; text-transform: uppercase; letter-spacing: 0.04em; }
             #po-paper .po-fs    { font-style: italic; }
-            #po-paper .po-gap   { margin-top: 14pt !important; }
+            #po-paper .po-gap   { margin-top: 13pt !important; }
           `}</style>
 
           <div id="po-toolbar" style={{ width: "210mm", margin: "0 auto 14px", display: "flex", gap: 10 }}>
