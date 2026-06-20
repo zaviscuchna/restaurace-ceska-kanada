@@ -5,7 +5,7 @@ const COOKIE_NAME = "ck_admin";
 const COOKIE_OPTS = {
   httpOnly: true,
   sameSite: "strict" as const,
-  secure: process.env.NODE_ENV === "production",
+  secure: false,
   maxAge: 8 * 60 * 60,
   path: "/",
 };
