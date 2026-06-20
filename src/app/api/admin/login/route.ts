@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { signSession } from "@/lib/admin-session";
 
 const COOKIE_NAME = "ck_admin";
+// secure: false protože produkce běží na HTTP (sslip.io bez TLS).
+// Až bude HTTPS → změnit na: process.env.NODE_ENV === "production"
 const COOKIE_OPTS = {
   httpOnly: true,
   sameSite: "strict" as const,
-  secure: false,
+  secure: process.env.HTTPS_ENABLED === "true",
   maxAge: 8 * 60 * 60,
   path: "/",
 };
