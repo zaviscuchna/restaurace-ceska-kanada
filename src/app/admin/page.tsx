@@ -172,21 +172,31 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
   const [loading, setLoading] = useState(true);
 
   // Načti dnešní polévky + přídavky z PB
+  // Pokud pro dnešek neexistuje záznam, použij poslední existující jako výchozí bod
   useEffect(() => {
     const pb = getClientPb();
+    const applyDishes = (dishes: Dish[]) => {
+      const permIds = new Set(allDishes.filter(d => d.is_permanent && d.is_active !== false).map(d => d.id));
+      const nonPerm = dishes.filter(d => !permIds.has(d.id));
+      setSoups(nonPerm.filter(d => d.category === SOUP_CATEGORY_ID).map(d => ({ id: mkId(), dish: d, customName: d.name, price: d.price })));
+      setAdditions(nonPerm.filter(d => d.category !== SOUP_CATEGORY_ID).map(d => ({ id: mkId(), dish: d, customName: d.name, price: d.price })));
+    };
     pb.collection("daily_menu").getFirstListItem<DailyMenu & { expand: { dishes: Dish[] } }>(
       `date = "${today}"`,
       { expand: "dishes" }
     ).then(dm => {
       setNote(dm.note ?? "");
-      const dishes = dm.expand?.dishes ?? [];
-      const permIds = new Set(allDishes.filter(d => d.is_permanent && d.is_active !== false).map(d => d.id));
-      const nonPermDishes = dishes.filter(d => !permIds.has(d.id));
-      const soupDishes = nonPermDishes.filter(d => d.category === SOUP_CATEGORY_ID);
-      const mainDishes = nonPermDishes.filter(d => d.category !== SOUP_CATEGORY_ID);
-      setSoups(soupDishes.map(d => ({ id: mkId(), dish: d, customName: d.name, price: d.price })));
-      setAdditions(mainDishes.map(d => ({ id: mkId(), dish: d, customName: d.name, price: d.price })));
-    }).catch(() => {}).finally(() => setLoading(false));
+      applyDishes(dm.expand?.dishes ?? []);
+    }).catch(() => {
+      // Pro dnešek nic není — načti poslední záznam z předchozích dnů
+      pb.collection("daily_menu").getList<DailyMenu & { expand: { dishes: Dish[] } }>(
+        1, 1,
+        { filter: `date < "${today}"`, sort: "-date", expand: "dishes" }
+      ).then(result => {
+        const prev = result.items[0];
+        if (prev) applyDishes(prev.expand?.dishes ?? []);
+      }).catch(() => {});
+    }).finally(() => setLoading(false));
   }, [allDishes]);
 
   const addSoup = () => setSoups(s => [...s, newItem()]);
