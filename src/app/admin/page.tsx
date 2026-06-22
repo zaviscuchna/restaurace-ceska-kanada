@@ -295,21 +295,22 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
               #po-toolbar { display: none !important; }
             }
             /* ── Obsah (screen i print) ── */
-            #po-paper .po-header { text-align: center; margin-bottom: 22pt; flex-shrink: 0; }
-            #po-paper .po-title  { font-size: 30pt; font-weight: bold; letter-spacing: 0.1em; line-height: 1.15; }
-            #po-paper .po-date   { font-size: 12pt; margin-top: 5pt; }
-            #po-paper table      { width: 100%; border-collapse: collapse; flex: 1; }
-            #po-paper .po-sh td  { font-size: 12pt; font-weight: bold; text-decoration: underline;
-                                   padding-top: 18pt; padding-bottom: 5pt; }
-            #po-paper .po-row td { font-size: 12pt; padding: 7pt 0; vertical-align: baseline; }
-            #po-paper .po-name   { padding-right: 8pt; }
-            #po-paper .po-price  { font-weight: bold; white-space: nowrap; text-align: right; min-width: 60pt; }
-            #po-paper .po-footer { margin-top: 28pt; text-align: center; flex-shrink: 0; }
-            #po-paper .po-footer p { font-size: 11pt; margin-bottom: 4pt; }
-            #po-paper .po-fi    { font-style: italic; font-weight: bold; }
-            #po-paper .po-fc    { font-weight: bold; text-transform: uppercase; letter-spacing: 0.04em; }
-            #po-paper .po-fs    { font-style: italic; }
-            #po-paper .po-gap   { margin-top: 13pt !important; }
+            #po-paper .po-header   { text-align: center; margin-bottom: 20pt; flex-shrink: 0; }
+            #po-paper .po-title    { font-size: 36pt; font-weight: bold; letter-spacing: 0.08em; line-height: 1.1; }
+            #po-paper .po-subtitle { font-size: 14pt; font-weight: bold; margin-top: 6pt; }
+            #po-paper .po-date     { font-size: 12pt; margin-top: 4pt; }
+            #po-paper table        { width: 100%; border-collapse: collapse; flex: 1; }
+            #po-paper .po-sh td    { font-size: 12pt; font-weight: bold; text-decoration: underline;
+                                     text-transform: uppercase; padding-top: 16pt; padding-bottom: 4pt; }
+            #po-paper .po-row td   { font-size: 12pt; padding: 5pt 0; vertical-align: baseline; }
+            #po-paper .po-name     { padding-right: 8pt; }
+            #po-paper .po-price    { font-weight: bold; white-space: nowrap; text-align: right; min-width: 60pt; }
+            #po-paper .po-footer   { margin-top: 24pt; text-align: center; flex-shrink: 0; }
+            #po-paper .po-footer p { font-size: 11pt; margin-bottom: 3pt; }
+            #po-paper .po-fi       { font-style: italic; font-weight: bold; }
+            #po-paper .po-fc       { font-weight: bold; text-transform: uppercase; letter-spacing: 0.04em; }
+            #po-paper .po-fs       { font-style: italic; }
+            #po-paper .po-gap      { margin-top: 13pt !important; }
           `}</style>
 
           <div id="po-toolbar" style={{ width: "210mm", margin: "0 auto 14px", display: "flex", gap: 10 }}>
@@ -326,6 +327,7 @@ function DailyMenuTab({ allDishes }: { allDishes: Dish[] }) {
           <div id="po-paper">
             <div className="po-header">
               <div className="po-title">JÍDELNÍ LÍSTEK</div>
+              <div className="po-subtitle">Restaurace Česká Kanada</div>
               <div className="po-date">{printData.dateStr}</div>
             </div>
 
