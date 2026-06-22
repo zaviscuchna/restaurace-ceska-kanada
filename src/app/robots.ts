@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/admin", "/api/"],
+      disallow: ["/sprava-jidelnicku", "/api/"],
     },
     sitemap: "https://restauraceceskakanada.cz/sitemap.xml",
   };
