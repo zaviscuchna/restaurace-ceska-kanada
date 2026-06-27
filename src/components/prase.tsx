@@ -18,7 +18,7 @@ export function Prase() {
               <span className="italic text-primary-soft">na rožni</span>
             </h2>
             <p className="max-w-md text-base leading-relaxed text-muted lg:text-right">
-              Pomalu pečené celé prase nad živým ohněm — zlatavá kůrka,
+              Pomalu pečené celé prase nad ohněm — zlatavá kůrka,
               šťavnaté maso. Tradice, která voní po celém kempu.
             </p>
           </div>
@@ -56,7 +56,7 @@ export function Prase() {
         {/* Tři detaily pod fotkou */}
         <ul className="mt-6 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
           {[
-            { n: "01", title: "Živý oheň", text: "Pečeme tradičně nad dřevem — žádné zkratky, žádné pece." },
+            { n: "01", title: "Oheň", text: "Pečeme tradičně nad dřevem — žádné zkratky, žádné pece." },
             { n: "02", title: "Celé prase", text: "Od rána na rožni, ke stolu přichází až je hotové — ne dřív." },
             { n: "03", title: "Čt & So", text: "Pravidelně dvakrát týdně, dokud není prase. Nedá se rezervovat." },
           ].map((item, i) => (
