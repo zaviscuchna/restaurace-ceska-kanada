@@ -9,9 +9,7 @@ export const site = {
   place: "Autokemp Zvůle",
   region: "Česká Kanada",
 
-  // Reálná data z oficiálního webu zvule.cz (ověř telefon — restaurace vs. kemp).
-  phone: "+420 607 541 511",
-  phoneHref: "+420607541511",
+  // Reálná data z oficiálního webu zvule.cz. Telefon záměrně neuvádíme (přání klienta).
   email: "zvule@zvule.cz",
   web: "www.zvule.cz",
   address: {

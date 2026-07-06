@@ -87,7 +87,6 @@ const jsonLd = {
   description:
     "Poctivá česká kuchyně v autokempu u rybníka Zvůle, v srdci České Kanady.",
   url: "https://restauraceceskakanada.cz",
-  telephone: "+420607541511",
   email: "zvule@zvule.cz",
   address: {
     "@type": "PostalAddress",

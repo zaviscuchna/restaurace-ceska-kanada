@@ -34,12 +34,9 @@ export async function Menu() {
         <MenuTabs menuGroups={menuGroups} dailyDishes={dailyDishes} dailyNote={dailyNote} />
 
         <Reveal className="mt-16 text-center">
-          <a
-            href={`tel:${site.phoneHref}`}
-            className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.2em] text-cream/70 transition-colors hover:text-primary"
-          >
-            Alergeny &amp; informace na vyžádání — {site.phone}
-          </a>
+          <p className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.2em] text-cream/70">
+            Alergeny &amp; informace na vyžádání u obsluhy
+          </p>
         </Reveal>
       </div>
     </section>

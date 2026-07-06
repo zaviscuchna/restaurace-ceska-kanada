@@ -17,19 +17,13 @@ export function Contact() {
             </h2>
             <p className="mt-6 max-w-md leading-relaxed text-cream/80">
               Na větší skupiny, oslavy i víkendy doporučujeme rezervaci předem.
-              Zavolejte nebo napište — rádi vám poradíme i s ubytováním v kempu.
+              Napište nám — rádi vám poradíme i s ubytováním v kempu.
             </p>
 
             <div className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center">
               <a
-                href={`tel:${site.phoneHref}`}
-                className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary px-7 py-3.5 font-medium text-bg transition-[transform,background-color] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:bg-primary-soft"
-              >
-                {site.phone}
-              </a>
-              <a
                 href={`mailto:${site.email}`}
-                className="inline-flex items-center justify-center rounded-full border border-cream/30 px-7 py-3.5 font-medium text-cream transition-colors duration-300 hover:border-cream/60 hover:bg-cream/5"
+                className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary px-7 py-3.5 font-medium text-bg transition-[transform,background-color] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:bg-primary-soft"
               >
                 {site.email}
               </a>

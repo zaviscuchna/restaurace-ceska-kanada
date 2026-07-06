@@ -51,7 +51,7 @@ export function SiteNav() {
 
         <div className="flex items-center gap-3">
           <a
-            href={`tel:${site.phoneHref}`}
+            href="#kontakt"
             className="hidden rounded-full border border-line px-5 py-2 text-sm text-cream transition-colors duration-300 hover:border-primary hover:text-primary sm:inline-block"
           >
             Rezervovat
@@ -98,11 +98,11 @@ export function SiteNav() {
           ))}
           <li>
             <a
-              href={`tel:${site.phoneHref}`}
+              href="#kontakt"
               onClick={() => setOpen(false)}
               className="mt-2 inline-block rounded-full bg-primary px-6 py-3 font-medium text-bg"
             >
-              Zavolat & rezervovat
+              Rezervovat
             </a>
           </li>
         </ul>
