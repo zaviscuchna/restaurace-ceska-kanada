@@ -10,13 +10,14 @@ import { Camp } from "@/components/camp";
 import { Gallery } from "@/components/gallery";
 import { Contact } from "@/components/contact";
 import { Footer } from "@/components/footer";
+import { season } from "@/lib/site";
 
 export default function Home() {
   return (
     <>
       <SiteNav />
       <Hero />
-      <Menu />
+      {!season.closed && <Menu />}
       <Prase />
       <About />
       <Reviews />

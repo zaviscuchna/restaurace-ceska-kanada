@@ -91,10 +91,10 @@ export function Hero() {
           style={{ animationDelay: "0.68s" }}
         >
           <a
-            href="#jidelnicek"
+            href={season.closed ? "#kontakt" : "#jidelnicek"}
             className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-3.5 font-medium text-bg shadow-[0_8px_32px_rgba(200,146,74,0.3)] transition-[transform,background-color,box-shadow] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:bg-primary-soft hover:shadow-[0_14px_44px_rgba(200,146,74,0.4)]"
           >
-            Jídelníček
+            {season.closed ? "Napište nám" : "Jídelníček"}
             <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
           </a>
           {!season.closed && (

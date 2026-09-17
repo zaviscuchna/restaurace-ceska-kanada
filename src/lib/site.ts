@@ -38,13 +38,18 @@ export const season = {
   inSeasonHours: "V sezoně otevřeno denně od 11:00",
 } as const;
 
-export const nav = [
+const allNav = [
   { label: "O nás", href: "#o-nas" },
   { label: "Jídelníček", href: "#jidelnicek" },
   { label: "Kemp & okolí", href: "#kemp" },
   { label: "Galerie", href: "#galerie" },
   { label: "Kontakt", href: "#kontakt" },
 ] as const;
+
+// Mimo sezonu jídelníček nezobrazujeme, takže ani odkaz na něj.
+export const nav = season.closed
+  ? allNav.filter((item) => item.href !== "#jidelnicek")
+  : allNav;
 
 // TODO: upravit dle skutečné otevírací doby
 export const hours = [
