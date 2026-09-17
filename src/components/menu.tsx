@@ -1,4 +1,4 @@
-import { site } from "@/lib/site";
+import { season } from "@/lib/site";
 import { getMenuGroups, getTodayDailyMenu } from "@/lib/menu-data";
 import { Reveal } from "./reveal";
 import { MenuTabs } from "./menu-tabs";
@@ -24,14 +24,27 @@ export async function Menu() {
           <h2 className="font-display text-[clamp(2.1rem,5vw,3.6rem)] font-light leading-[1.05] tracking-[-0.02em] text-cream">
             Jídelníček
           </h2>
-          <p className="mx-auto mt-5 max-w-xl text-muted">
-            Denní nabídka se mění každý den, stálé menu zůstává celou sezónu. Letní specialitou je{" "}
-            <span className="text-cream/90">rožněné sele</span> — pravidelně v
-            úterý, čtvrtek a sobotu.
-          </p>
+          {season.closed ? (
+            <p className="mx-auto mt-5 max-w-xl text-muted">
+              Takhle jsme vařili letos. Jídelníček tu necháváme na ukázku —
+              denní nabídka i <span className="text-cream/90">rožněné sele</span>{" "}
+              se vrátí s novou sezonou.
+            </p>
+          ) : (
+            <p className="mx-auto mt-5 max-w-xl text-muted">
+              Denní nabídka se mění každý den, stálé menu zůstává celou sezónu. Letní specialitou je{" "}
+              <span className="text-cream/90">rožněné sele</span> — pravidelně v
+              úterý, čtvrtek a sobotu.
+            </p>
+          )}
         </Reveal>
 
-        <MenuTabs menuGroups={menuGroups} dailyDishes={dailyDishes} dailyNote={dailyNote} />
+        <MenuTabs
+          menuGroups={menuGroups}
+          dailyDishes={dailyDishes}
+          dailyNote={dailyNote}
+          seasonClosed={season.closed}
+        />
 
         <Reveal className="mt-16 text-center">
           <p className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.2em] text-cream/70">

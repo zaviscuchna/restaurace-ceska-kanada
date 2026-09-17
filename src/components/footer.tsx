@@ -1,4 +1,4 @@
-import { nav, site } from "@/lib/site";
+import { nav, season, site } from "@/lib/site";
 
 export function Footer() {
   return (
@@ -14,6 +14,11 @@ export function Footer() {
               Poctivá česká kuchyně v autokempu u rybníka Zvůle, v srdci České
               Kanady.
             </p>
+            {season.closed && (
+              <p className="mt-4 max-w-xs text-sm leading-relaxed text-primary-soft">
+                {season.badge} — {season.line}
+              </p>
+            )}
           </div>
 
           <div>

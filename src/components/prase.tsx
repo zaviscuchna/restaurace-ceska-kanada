@@ -1,6 +1,7 @@
 import Image from "next/image";
 import praseImg from "../../public/images/prase-na-roznii.jpg";
 import { Reveal } from "./reveal";
+import { season } from "@/lib/site";
 
 export function Prase() {
   return (
@@ -40,14 +41,14 @@ export function Prase() {
             <div className="absolute bottom-0 left-0 right-0 flex flex-col items-start gap-4 p-8 sm:flex-row sm:items-end sm:justify-between md:p-12">
               <div>
                 <p className="font-display text-[clamp(1rem,2.5vw,1.4rem)] font-light italic text-cream/70">
-                  Každý
+                  {season.closed ? "V sezoně každý" : "Každý"}
                 </p>
                 <p className="font-display text-[clamp(2rem,5vw,3.2rem)] leading-none tracking-[-0.02em] text-cream">
                   čtvrtek & sobotu
                 </p>
               </div>
               <p className="text-sm uppercase tracking-[0.25em] text-primary">
-                od doby otevření
+                {season.closed ? "Vrátíme se příští sezonu" : "od doby otevření"}
               </p>
             </div>
           </div>

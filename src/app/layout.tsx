@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import "./globals.css";
+import { season } from "@/lib/site";
 
 const cormorantGaramond = Cormorant_Garamond({
   subsets: ["latin", "latin-ext"],
@@ -22,8 +23,9 @@ export const metadata: Metadata = {
     default: "Restaurace Česká Kanada — Autokemp Zvůle, Kunžak",
     template: "%s | Restaurace Česká Kanada",
   },
-  description:
-    "Poctivá česká kuchyně v srdci České Kanady. Svíčková, řízek, pstruh — u rybníka Zvůle v Kunžaku. Denně otevřeno od 11 hodin.",
+  description: season.closed
+    ? "Poctivá česká kuchyně u rybníka Zvůle v Kunžaku. Sezona je ukončená — těšíme se na vás příští sezonu."
+    : "Poctivá česká kuchyně v srdci České Kanady. Svíčková, řízek, pstruh — u rybníka Zvůle v Kunžaku. Denně otevřeno od 11 hodin.",
   keywords: [
     "restaurace Česká Kanada",
     "restaurace Zvůle",
@@ -40,9 +42,12 @@ export const metadata: Metadata = {
     locale: "cs_CZ",
     url: "https://restauraceceskakanada.cz",
     siteName: "Restaurace Česká Kanada",
-    title: "Restaurace Česká Kanada — Poctivá česká kuchyně u Zvůle",
-    description:
-      "Svíčková, řízek, pstruh na grilu — u rybníka Zvůle v Kunžaku. Denně otevřeno od 11 hodin.",
+    title: season.closed
+      ? "Restaurace Česká Kanada — zavřeno, těšíme se příští sezonu"
+      : "Restaurace Česká Kanada — Poctivá česká kuchyně u Zvůle",
+    description: season.closed
+      ? "Restaurace u rybníka Zvůle v Kunžaku má sezonu za sebou. Těšíme se na vás příští sezonu."
+      : "Svíčková, řízek, pstruh na grilu — u rybníka Zvůle v Kunžaku. Denně otevřeno od 11 hodin.",
     images: [
       {
         url: "/images/hero-prkenko.jpg",
@@ -55,8 +60,9 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Restaurace Česká Kanada",
-    description:
-      "Poctivá česká kuchyně u rybníka Zvůle v Kunžaku. Denně otevřeno od 11 hodin.",
+    description: season.closed
+      ? "Poctivá česká kuchyně u rybníka Zvůle v Kunžaku. Sezona ukončena — těšíme se příští sezonu."
+      : "Poctivá česká kuchyně u rybníka Zvůle v Kunžaku. Denně otevřeno od 11 hodin.",
     images: ["/images/hero-prkenko.jpg"],
   },
   robots: {
@@ -84,8 +90,9 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Restaurant",
   name: "Restaurace Česká Kanada",
-  description:
-    "Poctivá česká kuchyně v autokempu u rybníka Zvůle, v srdci České Kanady.",
+  description: season.closed
+    ? "Poctivá česká kuchyně v autokempu u rybníka Zvůle, v srdci České Kanady. Mimo sezonu zavřeno."
+    : "Poctivá česká kuchyně v autokempu u rybníka Zvůle, v srdci České Kanady.",
   url: "https://restauraceceskakanada.cz",
   email: "zvule@zvule.cz",
   address: {
@@ -100,26 +107,31 @@ const jsonLd = {
     latitude: 49.018,
     longitude: 15.155,
   },
-  openingHoursSpecification: [
-    {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday"],
-      opens: "11:00",
-      closes: "22:00",
-    },
-    {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Friday", "Saturday"],
-      opens: "11:00",
-      closes: "23:00",
-    },
-    {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Sunday"],
-      opens: "11:00",
-      closes: "21:00",
-    },
-  ],
+  // Mimo sezonu vědomě neuvádíme otevírací dobu — Google by jinak hlásil „Otevřeno".
+  ...(season.closed
+    ? {}
+    : {
+        openingHoursSpecification: [
+          {
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday"],
+            opens: "11:00",
+            closes: "22:00",
+          },
+          {
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: ["Friday", "Saturday"],
+            opens: "11:00",
+            closes: "23:00",
+          },
+          {
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: ["Sunday"],
+            opens: "11:00",
+            closes: "21:00",
+          },
+        ],
+      }),
   servesCuisine: "Czech",
   priceRange: "$$",
   image: "https://restauraceceskakanada.cz/images/hero-prkenko.jpg",
@@ -134,6 +146,7 @@ export default function RootLayout({
   return (
     <html
       lang="cs"
+      data-season={season.closed ? "closed" : "open"}
       className={`${cormorantGaramond.variable} ${dmSans.variable} h-full antialiased`}
     >
       <head>

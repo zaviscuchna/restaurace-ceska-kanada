@@ -1,6 +1,7 @@
 import type React from "react";
 import Image from "next/image";
 import heroFood from "../../public/images/hero-food.png";
+import { season } from "@/lib/site";
 
 export function Hero() {
   return (
@@ -66,6 +67,25 @@ export function Hero() {
           Poctivá česká kuchyně v klidu borových lesů — u rybníka Zvůle v srdci České Kanady.
         </p>
 
+        {season.closed && (
+          <div
+            className="reveal mt-9 rounded-2xl border border-primary/25 bg-bg/55 px-7 py-6 backdrop-blur-sm sm:px-10"
+            style={{ animationDelay: "0.6s" }}
+          >
+            <p className="text-[0.62rem] uppercase tracking-[0.3em] text-primary">
+              {season.badge}
+            </p>
+            {/* Bezpatkově — Cormorant rozbíjí české háčky, tady musí být sdělení čisté */}
+            <p className="mt-3 text-[clamp(1.25rem,2.8vw,1.75rem)] font-light leading-[1.3] text-cream">
+              {season.headline}
+              <span className="mx-2 text-primary/50">·</span>
+              <span className="text-primary-soft">
+                těšíme se na vás příští sezonu.
+              </span>
+            </p>
+          </div>
+        )}
+
         <div
           className="reveal mt-10 flex flex-col gap-3 sm:flex-row sm:items-center"
           style={{ animationDelay: "0.68s" }}
@@ -77,19 +97,23 @@ export function Hero() {
             Jídelníček
             <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
           </a>
-          <a
-            href="#kontakt"
-            className="inline-flex items-center justify-center rounded-full border border-cream/20 px-8 py-3.5 font-medium text-cream transition-colors duration-300 hover:border-primary/50 hover:text-primary"
-          >
-            Rezervovat stůl
-          </a>
+          {!season.closed && (
+            <a
+              href="#kontakt"
+              className="inline-flex items-center justify-center rounded-full border border-cream/20 px-8 py-3.5 font-medium text-cream transition-colors duration-300 hover:border-primary/50 hover:text-primary"
+            >
+              Rezervovat stůl
+            </a>
+          )}
         </div>
 
         <p
           className="reveal mt-11 text-[0.66rem] uppercase tracking-[0.24em] text-muted/65"
           style={{ animationDelay: "0.85s" }}
         >
-          Otevřeno denně 11–22 · Sportovní 197, Kunžak
+          {season.closed
+            ? "Autokemp Zvůle · Sportovní 197, Kunžak"
+            : "Otevřeno denně 11–22 · Sportovní 197, Kunžak"}
         </p>
       </div>
 

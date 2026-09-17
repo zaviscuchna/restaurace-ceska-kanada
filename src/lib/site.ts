@@ -25,6 +25,19 @@ export const site = {
   },
 } as const;
 
+// ──────────────────────────────────────────────────────────────────
+//  SEZONNÍ REŽIM — jediný přepínač pro „zavřeno / otevřeno".
+//  Na jaře stačí přepnout `closed: false` a web se vrátí do provozu
+//  (hero, pruh v navigaci, otevírací doba, jídelníček i SEO popisky).
+// ──────────────────────────────────────────────────────────────────
+export const season = {
+  closed: true,
+  badge: "Sezona ukončena",
+  headline: "Zavřeno",
+  line: "Těšíme se na vás příští sezonu.",
+  inSeasonHours: "V sezoně otevřeno denně od 11:00",
+} as const;
+
 export const nav = [
   { label: "O nás", href: "#o-nas" },
   { label: "Jídelníček", href: "#jidelnicek" },

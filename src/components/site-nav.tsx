@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { nav, site } from "@/lib/site";
+import { nav, season, site } from "@/lib/site";
 
 export function SiteNav() {
   const [scrolled, setScrolled] = useState(false);
@@ -29,6 +29,16 @@ export function SiteNav() {
           : "border-b border-transparent"
       }`}
     >
+      {season.closed && (
+        <div className="border-b border-primary/20 bg-primary/10 backdrop-blur-md">
+          <p className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-3 gap-y-1 px-6 py-2.5 text-center text-[0.62rem] uppercase tracking-[0.24em] text-primary sm:text-[0.68rem] sm:tracking-[0.28em]">
+            <span>{season.badge}</span>
+            <span aria-hidden className="hidden h-px w-6 bg-primary/40 sm:inline-block" />
+            <span className="text-cream/75">{season.line}</span>
+          </p>
+        </div>
+      )}
+
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 md:px-12">
         <a href="#" className="flex flex-col leading-none" aria-label={site.name}>
           <span className="text-[0.62rem] uppercase tracking-[0.34em] text-primary/90">
@@ -54,7 +64,7 @@ export function SiteNav() {
             href="#kontakt"
             className="hidden rounded-full border border-line px-5 py-2 text-sm text-cream transition-colors duration-300 hover:border-primary hover:text-primary sm:inline-block"
           >
-            Rezervovat
+            {season.closed ? "Kontakt" : "Rezervovat"}
           </a>
 
           <button
@@ -102,7 +112,7 @@ export function SiteNav() {
               onClick={() => setOpen(false)}
               className="mt-2 inline-block rounded-full bg-primary px-6 py-3 font-medium text-bg"
             >
-              Rezervovat
+              {season.closed ? "Kontakt" : "Rezervovat"}
             </a>
           </li>
         </ul>

@@ -1,4 +1,4 @@
-import { hours, site } from "@/lib/site";
+import { hours, season, site } from "@/lib/site";
 import { Reveal } from "./reveal";
 
 export function Contact() {
@@ -10,15 +10,30 @@ export function Contact() {
           <Reveal id="rezervace">
             <p className="mb-6 flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-primary">
               <span className="h-px w-10 bg-primary/70" />
-              Rezervace &amp; kontakt
+              {season.closed ? "Kontakt" : "Rezervace & kontakt"}
             </p>
-            <h2 className="font-display text-[clamp(2.1rem,5vw,3.6rem)] font-light leading-[1.05] tracking-[-0.02em] text-cream">
-              Zamluvte si stůl <span className="italic text-primary-soft">u vody</span>
-            </h2>
-            <p className="mt-6 max-w-md leading-relaxed text-cream/80">
-              Na větší skupiny, oslavy i víkendy doporučujeme rezervaci předem.
-              Napište nám — rádi vám poradíme i s ubytováním v kempu.
-            </p>
+            {season.closed ? (
+              <>
+                <h2 className="font-display text-[clamp(2.1rem,5vw,3.6rem)] font-light leading-[1.05] tracking-[-0.02em] text-cream">
+                  Vidíme se <span className="italic text-primary-soft">za rok</span>
+                </h2>
+                <p className="mt-6 max-w-md leading-relaxed text-cream/80">
+                  Restaurace je pro letošní sezonu zavřená — těšíme se na vás příští
+                  sezonu. Napište nám e-mail, rádi odpovíme na dotazy i ohledně
+                  ubytování v kempu.
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="font-display text-[clamp(2.1rem,5vw,3.6rem)] font-light leading-[1.05] tracking-[-0.02em] text-cream">
+                  Zamluvte si stůl <span className="italic text-primary-soft">u vody</span>
+                </h2>
+                <p className="mt-6 max-w-md leading-relaxed text-cream/80">
+                  Na větší skupiny, oslavy i víkendy doporučujeme rezervaci předem.
+                  Napište nám — rádi vám poradíme i s ubytováním v kempu.
+                </p>
+              </>
+            )}
 
             <div className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center">
               <a
@@ -43,14 +58,26 @@ export function Contact() {
               <p className="mb-6 text-xs uppercase tracking-[0.25em] text-primary/80">
                 Otevírací doba
               </p>
-              <ul className="divide-y divide-line">
-                {hours.map((h) => (
-                  <li key={h.day} className="flex items-center justify-between py-3.5">
-                    <span className="text-cream/90">{h.day}</span>
-                    <span className="font-display text-primary-soft">{h.time}</span>
-                  </li>
-                ))}
-              </ul>
+              {season.closed ? (
+                <div className="border-t border-line pt-7">
+                  <p className="text-[clamp(1.9rem,3.6vw,2.5rem)] font-light leading-none text-cream">
+                    {season.headline}
+                  </p>
+                  <p className="mt-4 text-lg font-light leading-snug text-primary-soft">
+                    {season.line}
+                  </p>
+                  <p className="mt-6 text-sm text-muted">{season.inSeasonHours}</p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-line">
+                  {hours.map((h) => (
+                    <li key={h.day} className="flex items-center justify-between py-3.5">
+                      <span className="text-cream/90">{h.day}</span>
+                      <span className="font-display text-primary-soft">{h.time}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
               <a
                 href={site.mapsUrl}
                 target="_blank"

@@ -10,6 +10,7 @@ type Props = {
   menuGroups: MenuGroup[];
   dailyDishes: Dish[];
   dailyNote: string;
+  seasonClosed?: boolean;
 };
 
 function AllergenBadges({ allergens }: { allergens: Allergen[] }) {
@@ -62,8 +63,10 @@ function MenuGrid({ groups }: { groups: MenuGroup[] }) {
   );
 }
 
-export function MenuTabs({ menuGroups, dailyDishes, dailyNote }: Props) {
-  const [tab, setTab] = useState<Tab>(dailyDishes.length > 0 ? "daily" : "permanent");
+export function MenuTabs({ menuGroups, dailyDishes, dailyNote, seasonClosed }: Props) {
+  const [tab, setTab] = useState<Tab>(
+    !seasonClosed && dailyDishes.length > 0 ? "daily" : "permanent",
+  );
 
   const today = new Date().toLocaleDateString("cs-CZ", { day: "numeric", month: "long", year: "numeric" });
 
@@ -73,7 +76,14 @@ export function MenuTabs({ menuGroups, dailyDishes, dailyNote }: Props) {
 
   return (
     <div>
-      {/* Tab switcher */}
+      {/* Mimo sezonu: denní nabídka nedává smysl — jen stálé menu */}
+      {seasonClosed ? (
+        <div className="mb-14 flex justify-center border-b border-line">
+          <span className="px-8 pb-4 text-xs uppercase tracking-[0.25em] text-cream">
+            Stálé menu
+          </span>
+        </div>
+      ) : (
       <div className="mb-14 flex justify-center border-b border-line">
         {(["daily", "permanent"] as const).map((t) => (
           <button
@@ -88,9 +98,10 @@ export function MenuTabs({ menuGroups, dailyDishes, dailyNote }: Props) {
           </button>
         ))}
       </div>
+      )}
 
       {/* Denní nabídka */}
-      {tab === "daily" && (
+      {!seasonClosed && tab === "daily" && (
         <div>
           <div className="mb-10 flex items-center gap-4">
             <span className="h-px flex-1 bg-line" />
@@ -104,13 +115,13 @@ export function MenuTabs({ menuGroups, dailyDishes, dailyNote }: Props) {
               {dailyNote && <p className="mt-10 text-center text-xs text-muted">{dailyNote}</p>}
             </>
           ) : (
-            <p className="text-center text-muted">Dnešní nabídka ještě nebyla nastavena. Zavolejte nám.</p>
+            <p className="text-center text-muted">Dnešní nabídka ještě nebyla nastavena.</p>
           )}
         </div>
       )}
 
       {/* Stálé menu */}
-      {tab === "permanent" && <MenuGrid groups={menuGroups} />}
+      {(seasonClosed || tab === "permanent") && <MenuGrid groups={menuGroups} />}
     </div>
   );
 }
