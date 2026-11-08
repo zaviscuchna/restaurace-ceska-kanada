@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 import * as XLSX from "xlsx";
 import { getClientPb } from "@/lib/pb";
-import type { Dish, MenuGroup, Category, DailyMenu } from "@/lib/types";
+import type { Allergen, Dish, Category, DailyMenu } from "@/lib/types";
 import { ALLERGEN_NAMES } from "@/lib/types";
 
 // ── Auth (server-side via httpOnly cookie) ────────────────────────────────
@@ -13,7 +13,7 @@ async function checkSession(): Promise<boolean> {
   } catch { return false; }
 }
 
-async function loginWithPin(pin: string): Promise<boolean> {
+async function loginWithPin(pin: string): Promise<{ ok: boolean; message?: string }> {
   try {
     const r = await fetch("/api/admin/login", {
       method: "POST",
@@ -21,8 +21,13 @@ async function loginWithPin(pin: string): Promise<boolean> {
       body: JSON.stringify({ pin }),
       credentials: "include",
     });
-    return r.ok;
-  } catch { return false; }
+    if (r.ok) return { ok: true };
+    if (r.status === 429) {
+      const data = await r.json().catch(() => ({}));
+      return { ok: false, message: data.error ?? "Příliš mnoho pokusů. Zkuste to později." };
+    }
+    return { ok: false, message: "Chybný PIN" };
+  } catch { return { ok: false, message: "Nepodařilo se spojit se serverem" }; }
 }
 
 async function logoutSession(): Promise<void> {
@@ -38,9 +43,6 @@ type Section = { id: string; title: string; items: SectionItem[] };
 type SectionItem = { id: string; dish: Dish | null; customName: string; price: string };
 
 function mkId() { return Math.random().toString(36).slice(2); }
-function newSection(title = ""): Section {
-  return { id: mkId(), title, items: [newItem()] };
-}
 function newItem(): SectionItem {
   return { id: mkId(), dish: null, customName: "", price: "" };
 }
@@ -48,32 +50,45 @@ function newItem(): SectionItem {
 // ════════════════════════════════════════════════════════════════════════════
 //  PIN SCREEN
 // ════════════════════════════════════════════════════════════════════════════
+// PIN může mít 4 i více číslic (doporučeno 6+), proto se neodesílá automaticky
+// po N číslicích, ale tlačítkem / Enterem.
+const PIN_MIN_LENGTH = 4;
+const PIN_MAX_LENGTH = 16;
+
 function PinScreen({ onUnlock }: { onUnlock: () => void }) {
   const [pin, setPin] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
   const handleChange = (v: string) => {
-    const digits = v.replace(/\D/g, "").slice(0, 4);
-    setPin(digits);
-    setError(false);
-    if (digits.length === 4) {
-      loginWithPin(digits).then(ok => {
-        if (ok) {
-          onUnlock();
-        } else {
-          setError(true);
-          setTimeout(() => { setPin(""); setError(false); inputRef.current?.focus(); }, 600);
-        }
-      });
-    }
+    setPin(v.replace(/\D/g, "").slice(0, PIN_MAX_LENGTH));
+    setError(null);
   };
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (busy || pin.length < PIN_MIN_LENGTH) return;
+    setBusy(true);
+    loginWithPin(pin).then(res => {
+      if (res.ok) {
+        onUnlock();
+        return;
+      }
+      setBusy(false);
+      setError(res.message ?? "Chybný PIN");
+      setPin("");
+      setTimeout(() => inputRef.current?.focus(), 0);
+    });
+  };
+
+  const canSubmit = !busy && pin.length >= PIN_MIN_LENGTH;
 
   return (
     <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #f0f8f7 0%, #f6f2eb 100%)", zIndex: 100, padding: 20 }}>
-      <div style={{ background: "#fff", borderRadius: 20, padding: "44px 36px", maxWidth: 400, width: "100%", textAlign: "center", boxShadow: "0 4px 40px rgba(44,126,125,.12)" }}>
+      <form onSubmit={submit} style={{ background: "#fff", borderRadius: 20, padding: "44px 36px", maxWidth: 400, width: "100%", textAlign: "center", boxShadow: "0 4px 40px rgba(44,126,125,.12)" }}>
         <svg width="64" height="64" viewBox="0 0 64 64" style={{ margin: "0 auto 20px" }}>
           <circle cx="32" cy="32" r="28" stroke="#4CAAA8" strokeWidth="1.5" fill="none"/>
           <text fontFamily="Georgia,serif" fontSize="11" fill="#2D7E7D" textAnchor="middle" x="32" y="36" fontStyle="italic">ČK</text>
@@ -85,15 +100,22 @@ function PinScreen({ onUnlock }: { onUnlock: () => void }) {
           type="password"
           inputMode="numeric"
           pattern="[0-9]*"
-          maxLength={4}
+          autoComplete="current-password"
+          aria-label="PIN"
+          maxLength={PIN_MAX_LENGTH}
           value={pin}
+          disabled={busy}
           onChange={e => handleChange(e.target.value)}
-          placeholder="••••"
-          style={{ width: "100%", padding: 18, fontSize: 28, letterSpacing: "0.6em", textAlign: "center", border: `2px solid ${error ? "#c53b3b" : "#EDE6D8"}`, borderRadius: 12, outline: "none", fontWeight: 600, color: error ? "#c53b3b" : "#2D7E7D", background: "#F6F2EB", transition: "border-color .2s", animation: error ? "shake .35s" : "none" }}
+          placeholder="PIN"
+          style={{ width: "100%", padding: 18, fontSize: 28, letterSpacing: "0.4em", textAlign: "center", border: `2px solid ${error ? "#c53b3b" : "#EDE6D8"}`, borderRadius: 12, outline: "none", fontWeight: 600, color: error ? "#c53b3b" : "#2D7E7D", background: "#F6F2EB", transition: "border-color .2s", animation: error ? "shake .35s" : "none" }}
         />
-        {error && <div style={{ marginTop: 10, fontSize: 13, color: "#c53b3b" }}>Chybný PIN</div>}
-        <div style={{ marginTop: 24, fontSize: 12, color: "#7A6858" }}>Zadejte 4-místný PIN</div>
-      </div>
+        {error && <div role="alert" style={{ marginTop: 10, fontSize: 13, color: "#c53b3b" }}>{error}</div>}
+        <button type="submit" disabled={!canSubmit}
+          style={{ marginTop: 18, width: "100%", padding: "14px 18px", fontSize: 15, fontWeight: 600, background: canSubmit ? "#4CAAA8" : "#b9dcdb", color: "#fff", border: "none", borderRadius: 10, cursor: canSubmit ? "pointer" : "default", transition: "background .2s" }}>
+          {busy ? "Ověřuji…" : "Přihlásit"}
+        </button>
+        <div style={{ marginTop: 18, fontSize: 12, color: "#7A6858" }}>Zadejte PIN a potvrďte Enterem nebo tlačítkem</div>
+      </form>
       <style>{`@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }`}</style>
     </div>
   );
@@ -578,10 +600,10 @@ function DishesDbTab({ dishes, onRefresh }: { dishes: Dish[]; onRefresh: () => v
     onRefresh();
   };
 
-  const toggleAllergen = (n: number) => {
+  const toggleAllergen = (n: Allergen) => {
     if (!editDish) return;
     const a = editDish.allergens ?? [];
-    setEditDish({ ...editDish, allergens: a.includes(n as any) ? a.filter(x => x !== n) : [...a, n as any].sort((a, b) => a - b) });
+    setEditDish({ ...editDish, allergens: a.includes(n) ? a.filter(x => x !== n) : [...a, n].sort((a, b) => a - b) });
   };
 
   return (
@@ -689,8 +711,8 @@ function DishesDbTab({ dishes, onRefresh }: { dishes: Dish[]; onRefresh: () => v
                 <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", color: "#7A6858", marginBottom: 8 }}>Alergeny</span>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 6 }}>
                   {(Object.entries(ALLERGEN_NAMES) as [string, string][]).map(([n, name]) => {
-                    const num = parseInt(n);
-                    const checked = editDish.allergens?.includes(num as any);
+                    const num = parseInt(n) as Allergen;
+                    const checked = editDish.allergens?.includes(num);
                     return (
                       <label key={n} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 7, border: `1.5px solid ${checked ? "#4CAAA8" : "#EDE6D8"}`, background: checked ? "#EAF6F5" : "#fff", cursor: "pointer", fontSize: 12.5, color: checked ? "#2D7E7D" : "#4A3828", fontWeight: checked ? 600 : 400, transition: "all .15s" }}>
                         <input type="checkbox" checked={!!checked} onChange={() => toggleAllergen(num)} style={{ display: "none" }} />

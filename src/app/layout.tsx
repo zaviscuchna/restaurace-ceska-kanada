@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, DM_Sans } from "next/font/google";
+import { EB_Garamond, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { season } from "@/lib/site";
 
-const cormorantGaramond = Cormorant_Garamond({
+// EB Garamond místo Cormorant Garamond: Cormorant v Chrome odlepuje české háčky
+// (š, ě, č) od písmen. EB Garamond je variabilní (400–800), font-light se vykreslí jako 400.
+const ebGaramond = EB_Garamond({
   subsets: ["latin", "latin-ext"],
-  weight: ["300", "400", "500", "600", "700"],
   style: ["normal", "italic"],
   display: "swap",
-  variable: "--font-cormorant",
+  variable: "--font-eb-garamond",
 });
 
 const dmSans = DM_Sans({
@@ -147,7 +148,7 @@ export default function RootLayout({
     <html
       lang="cs"
       data-season={season.closed ? "closed" : "open"}
-      className={`${cormorantGaramond.variable} ${dmSans.variable} h-full antialiased`}
+      className={`${ebGaramond.variable} ${dmSans.variable} h-full antialiased`}
     >
       <head>
         <script
