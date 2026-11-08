@@ -75,7 +75,7 @@ export function Hero() {
             <p className="text-[0.62rem] uppercase tracking-[0.3em] text-primary">
               {season.badge}
             </p>
-            {/* Bezpatkově — Cormorant rozbíjí české háčky, tady musí být sdělení čisté */}
+            {/* Bezpatkově — sdělení musí být čisté (původně i kvůli háčkům v Cormorantu) */}
             <p className="mt-3 text-[clamp(1.25rem,2.8vw,1.75rem)] font-light leading-[1.3] text-cream">
               {season.headline}
               <span className="mx-2 text-primary/50">·</span>

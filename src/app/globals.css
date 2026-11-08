@@ -23,7 +23,7 @@
   --color-muted: var(--muted);
   --color-line: var(--line);
 
-  --font-display: var(--font-cormorant);
+  --font-display: var(--font-eb-garamond);
   --font-body: var(--font-dm-sans);
 }
 
@@ -64,7 +64,7 @@
   }
 }
 
-/* ── Display font – Cormorant Display, elegantní serif pro nadpisy ── */
+/* ── Display font – EB Garamond, elegantní serif pro nadpisy (správné české háčky) ── */
 .font-display {
   font-family: var(--font-display), 'Georgia', serif;
   font-feature-settings: "kern" 1, "liga" 1, "dlig" 1;
