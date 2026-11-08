@@ -51,7 +51,7 @@ export function Reviews() {
               <figure className="flex h-full flex-col rounded-2xl border border-primary/12 bg-black/55 p-7 backdrop-blur-sm">
                 <Stars count={r.stars} />
                 <blockquote className="mt-4 flex-1 font-display text-[1.05rem] font-light italic leading-relaxed text-cream">
-                  „{r.text}"
+                  „{r.text}“
                 </blockquote>
                 <figcaption className="mt-6 border-t border-primary/10 pt-5">
                   <span className="block text-sm font-medium text-white">

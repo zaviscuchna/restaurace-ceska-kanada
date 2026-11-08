@@ -17,14 +17,8 @@ export function Reveal({ children, delay = 0, className = "", id, as = "div" }: 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-
-    if (
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      setShown(true);
-      return;
-    }
+    // Omezený pohyb řeší CSS (motion-reduce:*), obsah je pak vidět hned bez animace.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const io = new IntersectionObserver(
       ([entry]) => {
@@ -48,7 +42,7 @@ export function Reveal({ children, delay = 0, className = "", id, as = "div" }: 
       style={{ transitionDelay: `${delay}ms` }}
       className={`transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
         shown ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-      } ${className}`}
+      } motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${className}`}
     >
       {children}
     </Tag>

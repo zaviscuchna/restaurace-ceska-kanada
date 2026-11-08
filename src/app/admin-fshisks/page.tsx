@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 import * as XLSX from "xlsx";
 import { getClientPb } from "@/lib/pb";
-import type { Dish, MenuGroup, Category, DailyMenu } from "@/lib/types";
+import type { Allergen, Dish, Category, DailyMenu } from "@/lib/types";
 import { ALLERGEN_NAMES } from "@/lib/types";
 
 // ── Auth (server-side via httpOnly cookie) ────────────────────────────────
@@ -38,9 +38,6 @@ type Section = { id: string; title: string; items: SectionItem[] };
 type SectionItem = { id: string; dish: Dish | null; customName: string; price: string };
 
 function mkId() { return Math.random().toString(36).slice(2); }
-function newSection(title = ""): Section {
-  return { id: mkId(), title, items: [newItem()] };
-}
 function newItem(): SectionItem {
   return { id: mkId(), dish: null, customName: "", price: "" };
 }
@@ -578,10 +575,10 @@ function DishesDbTab({ dishes, onRefresh }: { dishes: Dish[]; onRefresh: () => v
     onRefresh();
   };
 
-  const toggleAllergen = (n: number) => {
+  const toggleAllergen = (n: Allergen) => {
     if (!editDish) return;
     const a = editDish.allergens ?? [];
-    setEditDish({ ...editDish, allergens: a.includes(n as any) ? a.filter(x => x !== n) : [...a, n as any].sort((a, b) => a - b) });
+    setEditDish({ ...editDish, allergens: a.includes(n) ? a.filter(x => x !== n) : [...a, n].sort((a, b) => a - b) });
   };
 
   return (
@@ -689,8 +686,8 @@ function DishesDbTab({ dishes, onRefresh }: { dishes: Dish[]; onRefresh: () => v
                 <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", color: "#7A6858", marginBottom: 8 }}>Alergeny</span>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 6 }}>
                   {(Object.entries(ALLERGEN_NAMES) as [string, string][]).map(([n, name]) => {
-                    const num = parseInt(n);
-                    const checked = editDish.allergens?.includes(num as any);
+                    const num = parseInt(n) as Allergen;
+                    const checked = editDish.allergens?.includes(num);
                     return (
                       <label key={n} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 7, border: `1.5px solid ${checked ? "#4CAAA8" : "#EDE6D8"}`, background: checked ? "#EAF6F5" : "#fff", cursor: "pointer", fontSize: 12.5, color: checked ? "#2D7E7D" : "#4A3828", fontWeight: checked ? 600 : 400, transition: "all .15s" }}>
                         <input type="checkbox" checked={!!checked} onChange={() => toggleAllergen(num)} style={{ display: "none" }} />
