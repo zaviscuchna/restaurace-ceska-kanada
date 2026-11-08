@@ -1,10 +1,11 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHash, createHmac, timingSafeEqual } from "crypto";
 
 export const COOKIE_NAME = "ck_admin";
 
 const SESSION_MAX_AGE_S = 8 * 60 * 60;
 // Jen pro lokální vývoj (next dev). V produkci se nikdy nepoužije, viz getSessionSecret().
 const DEV_ONLY_SECRET = "dev-secret-jen-pro-lokalni-vyvoj";
+const MIN_PIN_LENGTH_RECOMMENDED = 6;
 const MIN_SECRET_LENGTH_RECOMMENDED = 32;
 
 const isProduction = () => process.env.NODE_ENV === "production";
@@ -52,6 +53,23 @@ export function assertAdminConfig(): void {
       `[admin] ADMIN_SESSION_SECRET je kratší než ${MIN_SECRET_LENGTH_RECOMMENDED} znaků, doporučuji ho prodloužit.`,
     );
   }
+  const pin = process.env.ADMIN_PIN ?? "";
+  if (!pin) {
+    console.warn("[admin] ADMIN_PIN není nastavený, přihlášení do administrace nepůjde.");
+  } else if (pin.length < MIN_PIN_LENGTH_RECOMMENDED) {
+    console.warn(
+      `[admin] ADMIN_PIN je kratší než ${MIN_PIN_LENGTH_RECOMMENDED} znaků, doporučuji ho prodloužit.`,
+    );
+  }
+}
+
+/** Porovná zadaný PIN s ADMIN_PIN v konstantním čase (bez ohledu na délku). */
+export function pinMatches(input: string): boolean {
+  const expected = process.env.ADMIN_PIN ?? "";
+  if (!expected) return false;
+  const a = createHash("sha256").update(input, "utf8").digest();
+  const b = createHash("sha256").update(expected, "utf8").digest();
+  return timingSafeEqual(a, b);
 }
 
 export function signSession(): string {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { COOKIE_NAME, SESSION_COOKIE_OPTS, signSession } from "@/lib/admin-session";
+import { COOKIE_NAME, SESSION_COOKIE_OPTS, pinMatches, signSession } from "@/lib/admin-session";
 import {
   MAX_FAILURES,
   failureDelayMs,
@@ -8,6 +8,8 @@ import {
   recordFailure,
   recordSuccess,
 } from "@/lib/login-rate-limit";
+
+const MAX_PIN_LENGTH = 64;
 
 function tooManyAttempts(retryAfterS: number) {
   const minutes = Math.max(1, Math.ceil(retryAfterS / 60));
@@ -32,8 +34,8 @@ export async function POST(req: NextRequest) {
   const lockedNow = lockedForSeconds(ip);
   if (lockedNow > 0) return tooManyAttempts(lockedNow);
 
-  const ADMIN_PIN = process.env.ADMIN_PIN ?? "";
-  const ok = !!ADMIN_PIN && typeof pin === "string" && pin === ADMIN_PIN;
+  const ok =
+    typeof pin === "string" && pin.length > 0 && pin.length <= MAX_PIN_LENGTH && pinMatches(pin);
 
   if (!ok) {
     const { failures, lockedForS } = recordFailure(ip);
