@@ -17,8 +17,8 @@ export function Reveal({ children, delay = 0, className = "", id, as = "div" }: 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    // Omezený pohyb řeší CSS (motion-reduce:*), obsah je pak vidět hned bez animace.
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Omezený pohyb řeší CSS (motion-reduce:*): obsah je vidět hned bez animace.
+    // Observer běží i tak, aby obsah nezmizel, když uživatel předvolbu za běhu vypne.
 
     const io = new IntersectionObserver(
       ([entry]) => {

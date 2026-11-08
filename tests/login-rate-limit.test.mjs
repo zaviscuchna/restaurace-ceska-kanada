@@ -72,8 +72,11 @@ test("plná paměť samých zámků: nová IP se odmítne, nepustí se nesledova
     for (let j = 0; j < rl.MAX_FAILURES; j++) rl.recordFailure(`ip-${i}`, T0);
   }
   assert.equal(rl._stats().entries, rl.MAX_ENTRIES);
+  // Globální zámek se při plnění spustil taky; vynulovat ho, ať test ověří právě kapacitu.
+  rl._resetGlobalForTests();
   const gate = rl.checkLoginAllowed("198.51.100.77", T0 + 1000);
   assert.equal(gate.allowed, false);
+  assert.equal(gate.reason, "kapacita");
   // důvěryhodná IP projde (strop smí mírně překročit)
   assert.equal(rl.checkLoginAllowed("192.0.2.200", T0 + 1000).allowed, true);
 });
@@ -91,13 +94,19 @@ test("globální limit: 30 chyb z různých IP zavře přihlášení, důvěryho
 
 test("jedna IP sama globální limit nespustí", () => {
   for (let round = 0; round < 10; round++) {
-    const now = T0 + round * 16 * MIN;
-    for (let i = 0; i < rl.MAX_FAILURES; i++) {
-      if (rl.checkLoginAllowed("10.3.0.1", now).allowed) rl.recordFailure("10.3.0.1", now);
+    const now = T0 + round * 16 * MIN; // po vypršení předchozí blokace IP
+    let accepted = 0;
+    for (let i = 0; i < rl.MAX_FAILURES + 3; i++) {
+      if (rl.checkLoginAllowed("10.3.0.1", now).allowed) {
+        rl.recordFailure("10.3.0.1", now);
+        accepted++;
+      }
     }
+    assert.equal(accepted, rl.MAX_FAILURES, `kolo ${round}: přijato ${accepted} pokusů`);
+    // jiná (nedůvěryhodná) IP musí v tu chvíli pořád projít -> globální zámek nevznikl
+    const other = rl.checkLoginAllowed(`10.4.0.${round}`, now);
+    assert.equal(other.allowed, true, `kolo ${round}: ${JSON.stringify(other)}`);
   }
-  assert.ok(rl._stats().globalFailures < rl.GLOBAL_MAX_FAILURES);
-  assert.equal(rl.checkLoginAllowed("10.3.0.2", T0 + 200 * MIN).allowed, true);
 });
 
 test("zpoždění po chybě roste 1-4 s", () => {

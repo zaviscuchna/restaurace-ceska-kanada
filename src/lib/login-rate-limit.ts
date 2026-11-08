@@ -45,6 +45,11 @@ export function _resetForTests(): void {
   state.global = s.global;
 }
 
+/** Jen pro testy: vynuluje globální počítadlo a zámek, záznamy IP nechá. */
+export function _resetGlobalForTests(): void {
+  state.global = { failures: 0, windowStart: 0, lockedUntil: 0 };
+}
+
 /** Jen pro testy. */
 export function _stats() {
   return { entries: state.entries.size, trusted: state.trusted.size, globalFailures: state.global.failures };
