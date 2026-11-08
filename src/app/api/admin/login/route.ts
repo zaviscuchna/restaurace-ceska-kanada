@@ -1,16 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { signSession } from "@/lib/admin-session";
-
-const COOKIE_NAME = "ck_admin";
-// secure: false protože produkce běží na HTTP (sslip.io bez TLS).
-// Až bude HTTPS → změnit na: process.env.NODE_ENV === "production"
-const COOKIE_OPTS = {
-  httpOnly: true,
-  sameSite: "strict" as const,
-  secure: process.env.HTTPS_ENABLED === "true",
-  maxAge: 8 * 60 * 60,
-  path: "/",
-};
+import { COOKIE_NAME, SESSION_COOKIE_OPTS, signSession } from "@/lib/admin-session";
 
 export async function POST(req: NextRequest) {
   const { pin } = await req.json().catch(() => ({ pin: "" }));
@@ -21,8 +10,6 @@ export async function POST(req: NextRequest) {
   }
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(COOKIE_NAME, signSession(), COOKIE_OPTS);
+  res.cookies.set(COOKIE_NAME, signSession(), SESSION_COOKIE_OPTS);
   return res;
 }
-
-export { COOKIE_NAME };

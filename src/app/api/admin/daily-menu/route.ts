@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySession } from "@/lib/admin-session";
-import { COOKIE_NAME } from "../login/route";
+import { COOKIE_NAME, verifySession } from "@/lib/admin-session";
 
 async function getPbToken() {
   const pbUrl = process.env.NEXT_PUBLIC_PB_URL!;
